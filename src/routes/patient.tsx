@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { PatientLayout } from "@/components/PatientLayout";
 
 export const Route = createFileRoute("/patient")({
@@ -12,8 +12,4 @@ export const Route = createFileRoute("/patient")({
     ],
   }),
   component: PatientLayout,
-});
-
-// keep Outlet import alive
-void Outlet;
 });
