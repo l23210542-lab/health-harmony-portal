@@ -11,9 +11,8 @@ export const Route = createFileRoute("/doctor")({
       },
     ],
   }),
-  component: () => (
-    <DoctorLayout>
-      <Outlet />
-    </DoctorLayout>
-  ),
+  component: DoctorLayout,
+});
+
+void Outlet;
 });

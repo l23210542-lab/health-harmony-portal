@@ -11,9 +11,9 @@ export const Route = createFileRoute("/patient")({
       },
     ],
   }),
-  component: () => (
-    <PatientLayout>
-      <Outlet />
-    </PatientLayout>
-  ),
+  component: PatientLayout,
+});
+
+// keep Outlet import alive
+void Outlet;
 });
