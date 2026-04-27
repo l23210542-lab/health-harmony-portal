@@ -19,7 +19,10 @@ import { Route as PatientPrescriptionsRouteImport } from './routes/patient.presc
 import { Route as PatientAppointmentsRouteImport } from './routes/patient.appointments'
 import { Route as DoctorPatientsRouteImport } from './routes/doctor.patients'
 import { Route as DoctorCalendarRouteImport } from './routes/doctor.calendar'
+import { Route as ApiPrescriptionsRouteImport } from './routes/api.prescriptions'
+import { Route as ApiPatientsRouteImport } from './routes/api.patients'
 import { Route as DoctorPrescriptionsNewRouteImport } from './routes/doctor.prescriptions.new'
+import { Route as ApiAlertsIdRouteImport } from './routes/api.alerts.$id'
 
 const PatientRoute = PatientRouteImport.update({
   id: '/patient',
@@ -71,16 +74,33 @@ const DoctorCalendarRoute = DoctorCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => DoctorRoute,
 } as any)
+const ApiPrescriptionsRoute = ApiPrescriptionsRouteImport.update({
+  id: '/api/prescriptions',
+  path: '/api/prescriptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPatientsRoute = ApiPatientsRouteImport.update({
+  id: '/api/patients',
+  path: '/api/patients',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DoctorPrescriptionsNewRoute = DoctorPrescriptionsNewRouteImport.update({
   id: '/prescriptions/new',
   path: '/prescriptions/new',
   getParentRoute: () => DoctorRoute,
+} as any)
+const ApiAlertsIdRoute = ApiAlertsIdRouteImport.update({
+  id: '/api/alerts/$id',
+  path: '/api/alerts/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/doctor': typeof DoctorRouteWithChildren
   '/patient': typeof PatientRouteWithChildren
+  '/api/patients': typeof ApiPatientsRoute
+  '/api/prescriptions': typeof ApiPrescriptionsRoute
   '/doctor/calendar': typeof DoctorCalendarRoute
   '/doctor/patients': typeof DoctorPatientsRoute
   '/patient/appointments': typeof PatientAppointmentsRoute
@@ -88,10 +108,13 @@ export interface FileRoutesByFullPath {
   '/patient/profile': typeof PatientProfileRoute
   '/doctor/': typeof DoctorIndexRoute
   '/patient/': typeof PatientIndexRoute
+  '/api/alerts/$id': typeof ApiAlertsIdRoute
   '/doctor/prescriptions/new': typeof DoctorPrescriptionsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/patients': typeof ApiPatientsRoute
+  '/api/prescriptions': typeof ApiPrescriptionsRoute
   '/doctor/calendar': typeof DoctorCalendarRoute
   '/doctor/patients': typeof DoctorPatientsRoute
   '/patient/appointments': typeof PatientAppointmentsRoute
@@ -99,6 +122,7 @@ export interface FileRoutesByTo {
   '/patient/profile': typeof PatientProfileRoute
   '/doctor': typeof DoctorIndexRoute
   '/patient': typeof PatientIndexRoute
+  '/api/alerts/$id': typeof ApiAlertsIdRoute
   '/doctor/prescriptions/new': typeof DoctorPrescriptionsNewRoute
 }
 export interface FileRoutesById {
@@ -106,6 +130,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/doctor': typeof DoctorRouteWithChildren
   '/patient': typeof PatientRouteWithChildren
+  '/api/patients': typeof ApiPatientsRoute
+  '/api/prescriptions': typeof ApiPrescriptionsRoute
   '/doctor/calendar': typeof DoctorCalendarRoute
   '/doctor/patients': typeof DoctorPatientsRoute
   '/patient/appointments': typeof PatientAppointmentsRoute
@@ -113,6 +139,7 @@ export interface FileRoutesById {
   '/patient/profile': typeof PatientProfileRoute
   '/doctor/': typeof DoctorIndexRoute
   '/patient/': typeof PatientIndexRoute
+  '/api/alerts/$id': typeof ApiAlertsIdRoute
   '/doctor/prescriptions/new': typeof DoctorPrescriptionsNewRoute
 }
 export interface FileRouteTypes {
@@ -121,6 +148,8 @@ export interface FileRouteTypes {
     | '/'
     | '/doctor'
     | '/patient'
+    | '/api/patients'
+    | '/api/prescriptions'
     | '/doctor/calendar'
     | '/doctor/patients'
     | '/patient/appointments'
@@ -128,10 +157,13 @@ export interface FileRouteTypes {
     | '/patient/profile'
     | '/doctor/'
     | '/patient/'
+    | '/api/alerts/$id'
     | '/doctor/prescriptions/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/api/patients'
+    | '/api/prescriptions'
     | '/doctor/calendar'
     | '/doctor/patients'
     | '/patient/appointments'
@@ -139,12 +171,15 @@ export interface FileRouteTypes {
     | '/patient/profile'
     | '/doctor'
     | '/patient'
+    | '/api/alerts/$id'
     | '/doctor/prescriptions/new'
   id:
     | '__root__'
     | '/'
     | '/doctor'
     | '/patient'
+    | '/api/patients'
+    | '/api/prescriptions'
     | '/doctor/calendar'
     | '/doctor/patients'
     | '/patient/appointments'
@@ -152,6 +187,7 @@ export interface FileRouteTypes {
     | '/patient/profile'
     | '/doctor/'
     | '/patient/'
+    | '/api/alerts/$id'
     | '/doctor/prescriptions/new'
   fileRoutesById: FileRoutesById
 }
@@ -159,6 +195,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DoctorRoute: typeof DoctorRouteWithChildren
   PatientRoute: typeof PatientRouteWithChildren
+  ApiPatientsRoute: typeof ApiPatientsRoute
+  ApiPrescriptionsRoute: typeof ApiPrescriptionsRoute
+  ApiAlertsIdRoute: typeof ApiAlertsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -233,12 +272,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DoctorCalendarRouteImport
       parentRoute: typeof DoctorRoute
     }
+    '/api/prescriptions': {
+      id: '/api/prescriptions'
+      path: '/api/prescriptions'
+      fullPath: '/api/prescriptions'
+      preLoaderRoute: typeof ApiPrescriptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/patients': {
+      id: '/api/patients'
+      path: '/api/patients'
+      fullPath: '/api/patients'
+      preLoaderRoute: typeof ApiPatientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/doctor/prescriptions/new': {
       id: '/doctor/prescriptions/new'
       path: '/prescriptions/new'
       fullPath: '/doctor/prescriptions/new'
       preLoaderRoute: typeof DoctorPrescriptionsNewRouteImport
       parentRoute: typeof DoctorRoute
+    }
+    '/api/alerts/$id': {
+      id: '/api/alerts/$id'
+      path: '/api/alerts/$id'
+      fullPath: '/api/alerts/$id'
+      preLoaderRoute: typeof ApiAlertsIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -281,6 +341,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DoctorRoute: DoctorRouteWithChildren,
   PatientRoute: PatientRouteWithChildren,
+  ApiPatientsRoute: ApiPatientsRoute,
+  ApiPrescriptionsRoute: ApiPrescriptionsRoute,
+  ApiAlertsIdRoute: ApiAlertsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

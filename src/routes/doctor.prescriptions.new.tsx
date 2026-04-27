@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Plus, Search, Trash2, User } from "lucide-react";
 
 export const Route = createFileRoute("/doctor/prescriptions/new")({
@@ -29,13 +29,99 @@ const emptyMed = (): Med => ({
 
 function NewPrescription() {
   const [meds, setMeds] = useState<Med[]>([emptyMed()]);
-  const [patient, setPatient] = useState<string>("");
+  const [patientSearch, setPatientSearch] = useState("");
+  const [patients, setPatients] = useState<Array<{ id: string; name: string; email: string }>>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  const [notes, setNotes] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [status, setStatus] = useState<{ type: "idle" | "success" | "error"; message: string }>({
+    type: "idle",
+    message: "",
+  });
+
+  useEffect(() => {
+    void fetch(`/api/patients?query=${encodeURIComponent(patientSearch)}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("No se pudo cargar la lista de pacientes");
+        return res.json() as Promise<{ data: Array<{ id: string; name: string; email: string }> }>;
+      })
+      .then((payload) => setPatients(payload.data))
+      .catch(() => setPatients([]));
+  }, [patientSearch]);
 
   const update = (id: string, field: keyof Med, value: string) =>
     setMeds((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
 
   const remove = (id: string) =>
     setMeds((prev) => (prev.length > 1 ? prev.filter((m) => m.id !== id) : prev));
+
+  const submitPrescription = async () => {
+    const emptyMedication = meds.find(
+      (m) => !m.name.trim() || !m.dose.trim() || !m.purpose.trim() || !m.frequency.trim() || !m.duration.trim(),
+    );
+
+    if (!selectedPatientId) {
+      setStatus({ type: "error", message: "Selecciona un paciente antes de enviar la receta." });
+      return;
+    }
+
+    if (emptyMedication) {
+      setStatus({ type: "error", message: "Completa todos los campos obligatorios de cada medicamento." });
+      return;
+    }
+
+    const hasInvalidNumbers = meds.some((m) => Number.isNaN(Number(m.frequency)) || Number.isNaN(Number(m.duration)));
+    if (hasInvalidNumbers) {
+      setStatus({ type: "error", message: "Frecuencia y duración deben ser números válidos." });
+      return;
+    }
+
+    setIsSaving(true);
+    setStatus({ type: "idle", message: "" });
+
+    try {
+      const payload = {
+        doctorId: "doc-1",
+        patientId: selectedPatientId,
+        notes,
+        medications: meds.map((m) => ({
+          name: m.name.trim(),
+          dose: m.dose.trim(),
+          purpose: m.purpose.trim(),
+          instructions: m.instructions.trim(),
+          frequencyHours: Number(m.frequency),
+          durationDays: Number(m.duration),
+        })),
+      };
+
+      const response = await fetch("/api/prescriptions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorPayload = (await response.json()) as { error?: string };
+        throw new Error(errorPayload.error ?? "No se pudo guardar la receta");
+      }
+
+      setStatus({
+        type: "success",
+        message: "Receta creada correctamente. Se generaron alertas de toma automáticamente.",
+      });
+      setMeds([emptyMed()]);
+      setNotes("");
+      setSelectedPatientId("");
+      setPatientSearch("");
+    } catch (error) {
+      setStatus({
+        type: "error",
+        message: error instanceof Error ? error.message : "Ocurrió un error al enviar la receta.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -56,11 +142,25 @@ function NewPrescription() {
         <div className="relative">
           <User className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <input
-            value={patient}
-            onChange={(e) => setPatient(e.target.value)}
+            value={patientSearch}
+            onChange={(e) => setPatientSearch(e.target.value)}
             placeholder="Buscar paciente por nombre…"
             className="h-16 w-full rounded-2xl border-2 border-border bg-surface pl-14 pr-5 text-lg font-semibold outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
           />
+        </div>
+        <div className="mt-4">
+          <select
+            value={selectedPatientId}
+            onChange={(e) => setSelectedPatientId(e.target.value)}
+            className="h-12 w-full rounded-xl border-2 border-border bg-surface px-4 text-sm font-semibold outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
+          >
+            <option value="">Selecciona un paciente</option>
+            {patients.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} · {p.email}
+              </option>
+            ))}
+          </select>
         </div>
       </section>
 
@@ -118,7 +218,7 @@ function NewPrescription() {
                   <input
                     value={m.frequency}
                     onChange={(e) => update(m.id, "frequency", e.target.value)}
-                    placeholder="Cada 8 horas"
+                    placeholder="8"
                     className="h-14 w-full rounded-xl border-2 border-border bg-surface px-4 text-base font-semibold outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
                   />
                 </Field>
@@ -126,7 +226,7 @@ function NewPrescription() {
                   <input
                     value={m.duration}
                     onChange={(e) => update(m.id, "duration", e.target.value)}
-                    placeholder="7 días"
+                    placeholder="7"
                     className="h-14 w-full rounded-xl border-2 border-border bg-surface px-4 text-base font-semibold outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
                   />
                 </Field>
@@ -164,6 +264,30 @@ function NewPrescription() {
         </button>
       </section>
 
+      <section className="rounded-3xl border border-border bg-card p-6 shadow-soft">
+        <Field label="Notas de la receta">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            placeholder="Indicaciones generales para el paciente"
+            className="w-full rounded-xl border-2 border-border bg-surface px-4 py-3 text-base font-medium outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
+          />
+        </Field>
+      </section>
+
+      {status.type !== "idle" && (
+        <section
+          className={`rounded-2xl border p-4 text-sm font-semibold ${
+            status.type === "success"
+              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+              : "border-red-300 bg-red-50 text-red-700"
+          }`}
+        >
+          {status.message}
+        </section>
+      )}
+
       {/* Actions */}
       <section className="sticky bottom-24 z-10 flex flex-wrap gap-3 rounded-3xl border border-border bg-card/95 p-4 shadow-card backdrop-blur md:bottom-4">
         <button
@@ -174,9 +298,11 @@ function NewPrescription() {
         </button>
         <button
           type="button"
+          disabled={isSaving}
+          onClick={submitPrescription}
           className="inline-flex min-h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-success px-6 text-base font-bold text-success-foreground shadow-soft transition hover:scale-[1.01]"
         >
-          <Check className="h-5 w-5" strokeWidth={3} /> Enviar receta al paciente
+          <Check className="h-5 w-5" strokeWidth={3} /> {isSaving ? "Guardando..." : "Enviar receta al paciente"}
         </button>
       </section>
     </div>
