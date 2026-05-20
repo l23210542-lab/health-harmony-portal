@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { PatientLayout } from "@/components/PatientLayout";
+import { getPatientSession, isPatientAuthPath } from "@/lib/auth";
 
 export const Route = createFileRoute("/patient")({
   head: () => ({
@@ -11,5 +12,22 @@ export const Route = createFileRoute("/patient")({
       },
     ],
   }),
+  beforeLoad: ({ location }) => {
+    if (typeof window === "undefined") return;
+
+    const session = getPatientSession();
+    const onAuthPage = isPatientAuthPath(location.pathname);
+
+    if (onAuthPage && session) {
+      throw redirect({ to: "/patient" });
+    }
+
+    if (!onAuthPage && !session) {
+      throw redirect({
+        to: "/patient/login",
+        search: { redirect: location.pathname },
+      });
+    }
+  },
   component: PatientLayout,
 });

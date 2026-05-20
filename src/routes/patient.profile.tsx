@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bell, ChevronRight, LogOut, Mail, Phone, Shield, User } from "lucide-react";
+import { getPatientSession, logoutPatient } from "@/lib/auth";
 
 export const Route = createFileRoute("/patient/profile")({
   head: () => ({
@@ -9,6 +10,20 @@ export const Route = createFileRoute("/patient/profile")({
 });
 
 function Profile() {
+  const session = getPatientSession();
+  const navigate = useNavigate();
+  const initials = session?.name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const handleLogout = () => {
+    logoutPatient();
+    navigate({ to: "/patient/login", search: {} });
+  };
+
   return (
     <div className="space-y-8">
       <header>
@@ -20,16 +35,16 @@ function Profile() {
         <div className="bg-gradient-primary p-8 text-primary-foreground">
           <div className="flex items-center gap-5">
             <div className="grid h-20 w-20 shrink-0 place-items-center rounded-3xl bg-white/20 text-3xl font-extrabold backdrop-blur">
-              MG
+              {initials ?? "PA"}
             </div>
             <div>
-              <div className="text-2xl font-extrabold">María González</div>
+              <div className="text-2xl font-extrabold">{session?.name ?? "Paciente"}</div>
               <div className="text-sm text-white/80">Paciente desde 2023</div>
             </div>
           </div>
         </div>
         <ul className="divide-y divide-border">
-          <InfoRow icon={<Mail className="h-5 w-5" />} label="Correo" value="maria.g@email.com" />
+          <InfoRow icon={<Mail className="h-5 w-5" />} label="Correo" value={session?.email ?? "—"} />
           <InfoRow icon={<Phone className="h-5 w-5" />} label="Teléfono" value="+52 55 1234 5678" />
           <InfoRow icon={<User className="h-5 w-5" />} label="Edad" value="34 años" />
         </ul>
@@ -48,6 +63,7 @@ function Profile() {
 
       <button
         type="button"
+        onClick={handleLogout}
         className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-destructive/30 bg-card px-6 text-base font-bold text-destructive transition hover:bg-destructive/10"
       >
         <LogOut className="h-5 w-5" /> Cerrar sesión

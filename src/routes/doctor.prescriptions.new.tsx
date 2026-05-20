@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Check, Plus, Search, Trash2, User } from "lucide-react";
+import { getDoctorSession } from "@/lib/auth";
+import { newId } from "@/lib/utils";
 
 export const Route = createFileRoute("/doctor/prescriptions/new")({
   head: () => ({ meta: [{ title: "Crear Receta — Care Sync" }] }),
@@ -18,7 +20,7 @@ type Med = {
 };
 
 const emptyMed = (): Med => ({
-  id: crypto.randomUUID(),
+  id: newId(),
   name: "",
   dose: "",
   frequency: "",
@@ -80,8 +82,14 @@ function NewPrescription() {
     setStatus({ type: "idle", message: "" });
 
     try {
+      const doctor = getDoctorSession();
+      if (!doctor) {
+        setStatus({ type: "error", message: "Sesión de doctor no encontrada. Vuelve a iniciar sesión." });
+        return;
+      }
+
       const payload = {
-        doctorId: "doc-1",
+        doctorId: doctor.id,
         patientId: selectedPatientId,
         notes,
         medications: meds.map((m) => ({

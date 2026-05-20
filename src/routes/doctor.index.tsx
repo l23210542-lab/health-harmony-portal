@@ -1,20 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, ChevronRight, Clock, FileText, Plus, TrendingUp, Users } from "lucide-react";
+import { getDoctorSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/doctor/")({
   component: DoctorDashboard,
 });
 
 function DoctorDashboard() {
+  const session = getDoctorSession();
+
   return (
     <div className="space-y-8">
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-base font-medium text-muted-foreground">Buenos días,</p>
-          <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Dra. Elena Ríos</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">{session?.name ?? "Doctor"}</h1>
         </div>
         <Link
-          to="/doctor/prescriptions/new"
+          from="/doctor"
+          to="prescriptions/new"
           className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-gradient-primary px-6 text-base font-bold text-primary-foreground shadow-soft transition hover:scale-[1.02]"
         >
           <Plus className="h-5 w-5" strokeWidth={3} /> Nueva receta

@@ -1,17 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Bell, Check, Clock, Pill, Calendar, TrendingUp } from "lucide-react";
+import { getPatientSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/patient/")({
   component: PatientHome,
 });
 
 function PatientHome() {
+  const session = getPatientSession();
+
   return (
     <div className="space-y-8">
-      {/* Greeting */}
       <header>
         <p className="text-base font-medium text-muted-foreground">Buenos días,</p>
-        <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">María González</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">{session?.name ?? "Paciente"}</h1>
       </header>
 
       {/* Hero alert: next medication */}

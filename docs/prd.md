@@ -52,21 +52,22 @@ Notificaciones: Integración con API del navegador (Web Push) o un servicio como
 Automatización (Cron Jobs): El sistema debe evaluar constantemente qué medicamentos tocan en la hora actual para disparar las alertas.
 8. Data Model Overview
 Esquema de base de datos para que Cursor genere los modelos ORM/SQL.
-Entidad
-Campos Clave
-Relaciones
+
 Users
 id, role (doctor/patient), name, email, phone
--
+
 Appointments
 id, doctor_id, patient_id, date_time, status
 Belongs to Doctor, Patient
+
 Prescriptions
 id, doctor_id, patient_id, created_at, notes
 Has many Medications
+
 Medications
 id, prescription_id, name, purpose, instructions, frequency_hours, duration_days
 Belongs to Prescription
+
 Alerts/Logs
 id, patient_id, medication_id, scheduled_time, status (pending/taken/missed)
 Belongs to Patient, Medication

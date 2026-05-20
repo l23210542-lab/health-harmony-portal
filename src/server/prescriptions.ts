@@ -1,4 +1,6 @@
 import { mutateDb, readDb, type AlertLog, type Medication, type Prescription, type User } from "@/server/database";
+import { getDoctorById } from "@/server/doctors";
+import { getPatientById, searchPatients } from "@/server/patients";
 
 export type CreateMedicationInput = {
   name: string;
@@ -22,28 +24,50 @@ export type CreatedPrescriptionPayload = {
   alerts: AlertLog[];
 };
 
-export function getPatientsByName(query?: string): Promise<User[]> {
+export async function getPatientsByName(query?: string): Promise<User[]> {
+  try {
+    const fromSupabase = await searchPatients(query);
+    if (fromSupabase.length > 0) {
+      return fromSupabase.map((p) => ({
+        id: p.id,
+        role: "patient" as const,
+        name: p.name,
+        email: p.email,
+        phone: "",
+      }));
+    }
+  } catch {
+    // fallback a datos locales del prototipo
+  }
+
   const normalized = query?.trim().toLowerCase() ?? "";
-  return readDb().then((db) =>
-    db.users
-      .filter((u) => u.role === "patient")
-      .filter((u) => (normalized ? u.name.toLowerCase().includes(normalized) : true)),
-  );
+  const db = await readDb();
+  return db.users
+    .filter((u) => u.role === "patient")
+    .filter((u) => (normalized ? u.name.toLowerCase().includes(normalized) : true));
 }
 
-export function createPrescription(input: CreatePrescriptionInput): Promise<CreatedPrescriptionPayload> {
-  return mutateDb((db) => {
-    const doctor = db.users.find((u) => u.id === input.doctorId && u.role === "doctor");
-    const patient = db.users.find((u) => u.id === input.patientId && u.role === "patient");
+export async function createPrescription(input: CreatePrescriptionInput): Promise<CreatedPrescriptionPayload> {
+  const [supabaseDoctor, supabasePatient] = await Promise.all([
+    getDoctorById(input.doctorId).catch(() => null),
+    getPatientById(input.patientId).catch(() => null),
+  ]);
 
-    if (!doctor) throw new Error("doctor_not_found");
-    if (!patient) throw new Error("patient_not_found");
+  return mutateDb((db) => {
+    const localDoctor = db.users.find((u) => u.id === input.doctorId && u.role === "doctor");
+    const localPatient = db.users.find((u) => u.id === input.patientId && u.role === "patient");
+
+    const doctorId = localDoctor?.id ?? supabaseDoctor?.id;
+    const patientId = localPatient?.id ?? supabasePatient?.id;
+
+    if (!doctorId) throw new Error("doctor_not_found");
+    if (!patientId) throw new Error("patient_not_found");
     if (!input.medications.length) throw new Error("medications_required");
 
     const prescription: Prescription = {
       id: crypto.randomUUID(),
-      doctor_id: doctor.id,
-      patient_id: patient.id,
+      doctor_id: doctorId,
+      patient_id: patientId,
       created_at: new Date().toISOString(),
       notes: input.notes?.trim() ?? "",
     };
@@ -71,7 +95,7 @@ export function createPrescription(input: CreatePrescriptionInput): Promise<Crea
         scheduledDate.setHours(scheduledDate.getHours() + elapsedHours);
         alerts.push({
           id: crypto.randomUUID(),
-          patient_id: patient.id,
+          patient_id: patientId,
           medication_id: medication.id,
           scheduled_time: scheduledDate.toISOString(),
           status: "pending",

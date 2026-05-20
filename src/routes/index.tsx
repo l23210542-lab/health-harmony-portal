@@ -53,7 +53,7 @@ function Landing() {
         {/* Portal cards */}
         <section className="mt-10 grid gap-6 md:grid-cols-2">
           <PortalCard
-            to="/patient"
+            to="/patient/login"
             badge="Para pacientes"
             title="Portal del Paciente"
             description="Recibe alertas de cada toma, consulta tus recetas y agenda citas con tus doctores."
@@ -61,7 +61,7 @@ function Landing() {
             tone="primary"
           />
           <PortalCard
-            to="/doctor"
+            to="/doctor/login"
             badge="Para doctores"
             title="Portal del Doctor"
             description="Crea recetas en segundos, gestiona tu calendario y dale seguimiento a tus pacientes."
@@ -101,7 +101,7 @@ function PortalCard({
   icon,
   tone,
 }: {
-  to: "/patient" | "/doctor";
+  to: "/patient/login" | "/doctor/login";
   badge: string;
   title: string;
   description: string;
@@ -120,6 +120,7 @@ function PortalCard({
   return (
     <Link
       to={to}
+      search={{}}
       className="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-soft transition hover:-translate-y-1 hover:shadow-card"
     >
       <div className={`inline-flex h-16 w-16 items-center justify-center rounded-2xl ${toneClasses}`}>

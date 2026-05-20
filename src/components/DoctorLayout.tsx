@@ -1,23 +1,37 @@
-import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { CalendarDays, LayoutDashboard, PlusSquare, Users } from "lucide-react";
+import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
+import { CalendarDays, LayoutDashboard, LogOut, PlusSquare, Users } from "lucide-react";
 import { Logo } from "./Logo";
+import { getDoctorSession, isDoctorAuthPath, logoutDoctor } from "@/lib/auth";
 import type { ComponentType } from "react";
 
 type NavItem = {
-  to: "/doctor" | "/doctor/calendar" | "/doctor/patients" | "/doctor/prescriptions/new";
+  to: "/" | "calendar" | "patients" | "prescriptions/new";
   label: string;
   icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+  matchPath: string;
 };
 
 const items: NavItem[] = [
-  { to: "/doctor", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/doctor/calendar", label: "Calendario", icon: CalendarDays },
-  { to: "/doctor/patients", label: "Pacientes", icon: Users },
-  { to: "/doctor/prescriptions/new", label: "Crear Receta", icon: PlusSquare },
+  { to: "/", matchPath: "/doctor", label: "Dashboard", icon: LayoutDashboard },
+  { to: "calendar", matchPath: "/doctor/calendar", label: "Calendario", icon: CalendarDays },
+  { to: "patients", matchPath: "/doctor/patients", label: "Pacientes", icon: Users },
+  { to: "prescriptions/new", matchPath: "/doctor/prescriptions/new", label: "Crear Receta", icon: PlusSquare },
 ];
 
 export function DoctorLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const session = getDoctorSession();
+  const isAuthPage = isDoctorAuthPath(location.pathname);
+
+  const handleLogout = () => {
+    logoutDoctor();
+    navigate({ to: "/doctor/login", search: {} });
+  };
+
+  if (isAuthPage) {
+    return <Outlet />;
+  }
 
   return (
     <div className="min-h-screen bg-background md:flex">
@@ -27,14 +41,15 @@ export function DoctorLayout() {
           <Logo size="md" />
         </div>
         <nav className="flex-1 space-y-2 px-4" aria-label="Navegación principal">
-          {items.map(({ to, label, icon: Icon }) => {
+          {items.map(({ to, matchPath, label, icon: Icon }) => {
             const active =
-              to === "/doctor"
-                ? location.pathname === "/doctor"
-                : location.pathname.startsWith(to);
+              matchPath === "/doctor"
+                ? location.pathname === "/doctor" || location.pathname === "/doctor/"
+                : location.pathname.startsWith(matchPath);
             return (
               <Link
-                key={to}
+                key={matchPath}
+                from="/doctor"
                 to={to}
                 className={`flex items-center gap-4 rounded-2xl px-4 py-4 text-base font-semibold transition ${
                   active
@@ -48,9 +63,20 @@ export function DoctorLayout() {
             );
           })}
         </nav>
-        <div className="m-4 rounded-2xl border border-border bg-primary-soft p-4">
-          <div className="text-sm font-semibold text-foreground">Dra. Elena Ríos</div>
-          <div className="text-xs text-muted-foreground">Medicina Interna · #45821</div>
+        <div className="m-4 space-y-3">
+          <div className="rounded-2xl border border-border bg-primary-soft p-4">
+            <div className="text-sm font-semibold text-foreground">{session?.name ?? "Doctor"}</div>
+            <div className="text-xs text-muted-foreground">
+              {session?.specialty ?? "Medicina"} · {session?.email}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-bold text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+          >
+            <LogOut className="h-4 w-4" /> Cerrar sesión
+          </button>
         </div>
       </aside>
 
@@ -58,9 +84,19 @@ export function DoctorLayout() {
       <header className="sticky top-0 z-30 border-b border-border bg-surface md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <Logo size="sm" />
-          <span className="rounded-full bg-success-soft px-3 py-1 text-xs font-bold uppercase tracking-wide text-success">
-            Doctor
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-success-soft px-3 py-1 text-xs font-bold uppercase tracking-wide text-success">
+              Doctor
+            </span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="grid h-10 w-10 place-items-center rounded-xl border border-border text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+              aria-label="Cerrar sesión"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -74,14 +110,15 @@ export function DoctorLayout() {
         aria-label="Navegación móvil"
       >
         <div className="flex items-stretch justify-around px-2 py-2">
-          {items.map(({ to, label, icon: Icon }) => {
+          {items.map(({ to, matchPath, label, icon: Icon }) => {
             const active =
-              to === "/doctor"
-                ? location.pathname === "/doctor"
-                : location.pathname.startsWith(to);
+              matchPath === "/doctor"
+                ? location.pathname === "/doctor" || location.pathname === "/doctor/"
+                : location.pathname.startsWith(matchPath);
             return (
               <Link
-                key={to}
+                key={matchPath}
+                from="/doctor"
                 to={to}
                 className={`flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-semibold transition ${
                   active ? "bg-primary-soft text-primary" : "text-muted-foreground"
