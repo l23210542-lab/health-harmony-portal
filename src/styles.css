@@ -157,3 +157,18 @@
   .shadow-card { box-shadow: var(--shadow-card); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
 }
+
+/* Impresión / PDF — reportes clínicos Care Sync */
+@media print {
+  @page {
+    margin: 1.25cm;
+    size: A4;
+  }
+
+  body {
+    background: white !important;
+    color: #0f172a !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
