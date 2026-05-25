@@ -1,11 +1,11 @@
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, LayoutDashboard, LogOut, PlusSquare, Users } from "lucide-react";
+import { AlertTriangle, CalendarDays, LayoutDashboard, LogOut, PlusSquare, Users } from "lucide-react";
 import { Logo } from "./Logo";
 import { getDoctorSession, isDoctorAuthPath, logoutDoctor } from "@/lib/auth";
 import type { ComponentType } from "react";
 
 type NavItem = {
-  to: "/" | "calendar" | "patients" | "prescriptions/new";
+  to: "/" | "calendar" | "patients" | "alerts" | "prescriptions/new";
   label: string;
   icon: ComponentType<{ className?: string; strokeWidth?: number }>;
   matchPath: string;
@@ -13,6 +13,7 @@ type NavItem = {
 
 const items: NavItem[] = [
   { to: "/", matchPath: "/doctor", label: "Dashboard", icon: LayoutDashboard },
+  { to: "alerts", matchPath: "/doctor/alerts", label: "Adherencia", icon: AlertTriangle },
   { to: "calendar", matchPath: "/doctor/calendar", label: "Calendario", icon: CalendarDays },
   { to: "patients", matchPath: "/doctor/patients", label: "Pacientes", icon: Users },
   { to: "prescriptions/new", matchPath: "/doctor/prescriptions/new", label: "Crear Receta", icon: PlusSquare },
@@ -34,9 +35,9 @@ export function DoctorLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background md:flex">
+    <div className="min-h-screen bg-background md:flex print:block">
       {/* Sidebar */}
-      <aside className="sticky top-0 z-30 hidden h-screen w-72 shrink-0 border-r border-border bg-surface md:flex md:flex-col">
+      <aside className="sticky top-0 z-30 hidden h-screen w-72 shrink-0 border-r border-border bg-surface md:flex md:flex-col print:hidden">
         <div className="px-6 py-6">
           <Logo size="md" />
         </div>
@@ -81,7 +82,7 @@ export function DoctorLayout() {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-30 border-b border-border bg-surface md:hidden">
+      <header className="sticky top-0 z-30 border-b border-border bg-surface md:hidden print:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <Logo size="sm" />
           <div className="flex items-center gap-2">
@@ -100,13 +101,13 @@ export function DoctorLayout() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6 pb-28 md:px-10 md:py-10 md:pb-10">
+      <main className="flex-1 px-4 py-6 pb-28 md:px-10 md:py-10 md:pb-10 print:max-w-none print:px-0 print:py-0 print:pb-0">
         <Outlet />
       </main>
 
       {/* Mobile bottom nav */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface/95 backdrop-blur-xl md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface/95 backdrop-blur-xl md:hidden print:hidden"
         aria-label="Navegación móvil"
       >
         <div className="flex items-stretch justify-around px-2 py-2">

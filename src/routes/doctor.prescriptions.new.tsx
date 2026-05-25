@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { Check, Plus, Search, Trash2, User } from "lucide-react";
 import { getDoctorSession } from "@/lib/auth";
 import { newId } from "@/lib/utils";
 
+const prescriptionSearchSchema = z.object({
+  patientId: z.string().optional(),
+});
+
 export const Route = createFileRoute("/doctor/prescriptions/new")({
+  validateSearch: prescriptionSearchSchema,
   head: () => ({ meta: [{ title: "Crear Receta — Care Sync" }] }),
   component: NewPrescription,
 });
@@ -30,16 +36,23 @@ const emptyMed = (): Med => ({
 });
 
 function NewPrescription() {
+  const { patientId: preselectedPatientId } = Route.useSearch();
   const [meds, setMeds] = useState<Med[]>([emptyMed()]);
   const [patientSearch, setPatientSearch] = useState("");
   const [patients, setPatients] = useState<Array<{ id: string; name: string; email: string }>>([]);
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(preselectedPatientId ?? "");
   const [notes, setNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "idle" | "success" | "error"; message: string }>({
     type: "idle",
     message: "",
   });
+
+  useEffect(() => {
+    if (preselectedPatientId) {
+      setSelectedPatientId(preselectedPatientId);
+    }
+  }, [preselectedPatientId]);
 
   useEffect(() => {
     void fetch(`/api/patients?query=${encodeURIComponent(patientSearch)}`)

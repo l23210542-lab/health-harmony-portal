@@ -67,280 +67,280 @@
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-17T23:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "b41d26eb-2d16-45f2-9638-1e7ef7f8067f",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-18T02:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "c4833a0b-f2e0-4db8-abc0-5228f759b047",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-18T05:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "155d7b2e-3e2f-4249-b8d6-ddda36b93317",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-18T08:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "596e53ed-25d5-4b47-9f94-6965ccc9e187",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-18T11:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "ea5b3510-56b9-4d98-9dd7-aa9875311a6e",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-18T14:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "8ae6fd2b-1dd8-4272-9ef0-6a9f0ec3948f",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-18T17:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "38a81751-a6a8-4f14-a7c7-0b80f790b0a5",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-18T20:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "b2814b9a-4fcb-4aaf-bb12-d9422a919c99",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-18T23:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "d9cb83b3-820c-4083-a47e-1e5518bbebc6",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-19T02:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "b1afe34f-2a2e-4a41-8908-af2107d9d504",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-19T05:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "e052d856-0cac-46df-8d71-87c29cbcb97a",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-19T08:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "7ac79f20-a196-492f-a125-bfe078032bd5",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-19T11:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "6095292c-57aa-4b7d-89b3-f91e6937b172",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-19T14:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "2d77a05c-3ff4-4a94-9461-18a8d713230f",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-19T17:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "96842801-50d4-41c2-b512-abf8e97c298a",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-19T20:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "2b83ae8f-b653-412b-9aad-fea4dfab852f",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-19T23:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "ea7ae288-4656-4a62-aae2-345ca6b45368",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-20T02:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "cf4c9ac0-ba2a-4840-81af-3d7f63cf17c5",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-20T05:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "8507f17c-857d-4be9-be24-9ea4a2156a42",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-20T08:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "4de7f6f8-dd25-44cc-996a-54acc8e60be8",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-20T11:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "dff26360-6e7f-4bdd-ba1e-8674a1da3275",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-20T14:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "807569f8-eebf-45a8-9588-bd9d78377b0b",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-20T17:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "e4129ddc-e702-433d-9070-8f842143b723",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-20T20:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "11cf948f-ad2c-40ed-8e3f-c58ecb2c19d4",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-20T23:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "4d2c4f3b-3b00-4895-80cf-3d75c166d138",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-21T02:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "2b8b8851-8100-45e9-860c-d2e4aad17800",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-21T05:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "7c29d75b-c912-4e7c-9ad3-3b19210dfdb6",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-21T08:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "8529a4a6-aa7e-4aa7-bf5e-7d75bf9d8dd7",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-21T11:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "4de9a0c4-afaf-41ac-8323-7089d2b87bb3",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-21T14:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "e1ad6c0e-37eb-44eb-b1ee-5f985e703982",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-21T17:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "ebc3974c-76c1-4387-bf4e-c8eea6ee4625",
       "patient_id": "pat-1",
       "medication_id": "b4cdb8fd-1972-41be-98ca-f7245c8cdf2d",
       "scheduled_time": "2026-05-21T20:09:13.514Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "df3a21c1-f169-436b-b959-7c0a08693424",
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "medication_id": "1e315a54-c797-4003-97fa-d5d1b5d3e8fe",
       "scheduled_time": "2026-05-18T01:16:33.050Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "ef3755a0-6e07-4840-8b8f-9606d513c4ba",
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "medication_id": "1e315a54-c797-4003-97fa-d5d1b5d3e8fe",
       "scheduled_time": "2026-05-19T01:16:33.050Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "8d7b517b-0503-48b8-b96c-6286bfe4c0dc",
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "medication_id": "1e315a54-c797-4003-97fa-d5d1b5d3e8fe",
       "scheduled_time": "2026-05-20T01:16:33.050Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "081c8dfc-3071-477e-bcb6-90d721146833",
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "medication_id": "1e315a54-c797-4003-97fa-d5d1b5d3e8fe",
       "scheduled_time": "2026-05-21T01:16:33.050Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "ceacb4fd-12b7-463d-b0fc-4e9e36891519",
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "medication_id": "1e315a54-c797-4003-97fa-d5d1b5d3e8fe",
       "scheduled_time": "2026-05-22T01:16:33.050Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "579256d8-3edb-48e9-bb46-f41baf796f54",
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "medication_id": "1e315a54-c797-4003-97fa-d5d1b5d3e8fe",
       "scheduled_time": "2026-05-23T01:16:33.050Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "ab72a0a5-eb1b-46e6-abc0-c4dfa9630b18",
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "medication_id": "1e315a54-c797-4003-97fa-d5d1b5d3e8fe",
       "scheduled_time": "2026-05-24T01:16:33.050Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "27ebed0a-4fde-45cf-8e35-443a954ebf18",
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "medication_id": "1e315a54-c797-4003-97fa-d5d1b5d3e8fe",
       "scheduled_time": "2026-05-25T01:16:33.050Z",
-      "status": "pending"
+      "status": "missed"
     },
     {
       "id": "465bdd11-58c0-47f9-92d3-a934359fbd2d",
