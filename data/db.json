@@ -37,6 +37,13 @@
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "created_at": "2026-05-18T01:16:33.050Z",
       "notes": "feqwf"
+    },
+    {
+      "id": "b63f886f-861a-4a86-be69-d656bb752b5d",
+      "doctor_id": "255c0084-55d5-4405-9f2a-bbbf9d03eeb2",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "created_at": "2026-05-20T22:31:04.970Z",
+      "notes": ""
     }
   ],
   "medications": [
@@ -59,6 +66,16 @@
       "instructions": "adosioiqwd",
       "frequency_hours": 24,
       "duration_days": 23
+    },
+    {
+      "id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "prescription_id": "b63f886f-861a-4a86-be69-d656bb752b5d",
+      "name": "Paracetamol",
+      "dose": "1",
+      "purpose": "Antibiotico",
+      "instructions": "Evitar alcohol",
+      "frequency_hours": 8,
+      "duration_days": 6
     }
   ],
   "alerts": [
@@ -445,6 +462,132 @@
       "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
       "medication_id": "1e315a54-c797-4003-97fa-d5d1b5d3e8fe",
       "scheduled_time": "2026-06-09T01:16:33.050Z",
+      "status": "pending"
+    },
+    {
+      "id": "41869ae8-6cdd-43ef-8d68-f29c4f36ec57",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-20T22:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "3d58f504-6738-4dbe-9a71-0f4d0e3ef2d4",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-21T06:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "ce0e90a0-8af9-452e-bf5d-e24b8cb2045b",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-21T14:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "32878946-9709-468c-87a4-7b5ccffc2756",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-21T22:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "7bdf1a5a-0124-46da-836b-6727de48907e",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-22T06:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "8658f355-30e5-4b28-9e8b-0e44b0dbbfb9",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-22T14:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "2dbfcb7b-78ca-401e-b153-0fc9e6516222",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-22T22:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "3a509098-008d-41f4-a240-39d331140e9a",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-23T06:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "e8fd2b35-8fc4-47b6-9e74-800827b12ae5",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-23T14:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "620b2b92-8a31-4fd6-9c8d-c40418e012f1",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-23T22:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "f376c25c-44c8-4680-802a-8d714852f4be",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-24T06:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "a2782b9d-f752-482d-a2aa-9400eb86640d",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-24T14:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "2af5c658-2905-4965-875a-6b780001d4ca",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-24T22:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "6b7fb261-76bc-4aca-8c1c-a8bcb135361b",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-25T06:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "d3b1193d-8e45-448c-8a5d-64c30295caf7",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-25T14:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "932c03ac-1ea6-4299-baed-dfd131034894",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-25T22:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "2e958bc0-1e45-4460-805e-e2e705e4a211",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-26T06:31:04.970Z",
+      "status": "pending"
+    },
+    {
+      "id": "bd7d3019-b1dd-4eb4-84af-6c571c352fee",
+      "patient_id": "9f2a62fc-662d-44db-a4df-987b4b23408d",
+      "medication_id": "bdd18d97-a75c-415d-a07a-b519b3a61abb",
+      "scheduled_time": "2026-05-26T14:31:04.970Z",
       "status": "pending"
     }
   ]
