@@ -19,17 +19,23 @@ function Prescriptions() {
   const [tab, setTab] = useState<"active" | "completed">("active");
   const [meds, setMeds] = useState<PatientMedicationView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     if (!session?.id) return;
     setLoading(true);
+    setError("");
     try {
       const res = await fetch(`/api/patient/prescriptions?patientId=${encodeURIComponent(session.id)}`);
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const payload = (await res.json()) as { error?: string };
+        throw new Error(payload.error ?? "No se pudieron cargar tus recetas.");
+      }
       const json = (await res.json()) as { data: PatientMedicationView[] };
       setMeds(json.data);
-    } catch {
+    } catch (err) {
       setMeds([]);
+      setError(err instanceof Error ? err.message : "Error al cargar recetas.");
     } finally {
       setLoading(false);
     }
@@ -68,6 +74,17 @@ function Prescriptions() {
       {loading ? (
         <div className="flex min-h-40 items-center justify-center">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      ) : error ? (
+        <div className="rounded-3xl border border-destructive/30 bg-destructive/5 p-6">
+          <p className="font-semibold text-destructive">{error}</p>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="mt-4 rounded-2xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground"
+          >
+            Reintentar
+          </button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-3xl border-2 border-dashed border-border p-10 text-center text-muted-foreground">

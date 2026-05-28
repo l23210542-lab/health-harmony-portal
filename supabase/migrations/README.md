@@ -24,4 +24,5 @@ doctors ──┬── prescriptions ── medications ── alerts
 patients ─┴─────────┴── appointments
 ```
 
-La vista `v_doctor_patient_relationship` une doctores y pacientes que comparten receta o cita.
+14. `014_recreate_views.sql` — Recrea vistas analíticas si fallaron migraciones previas
+15. `015_grant_views.sql` — Permisos SELECT sobre vistas para la API Supabase

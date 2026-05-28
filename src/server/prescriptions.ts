@@ -227,7 +227,22 @@ export type PatientMedicationView = {
 export async function getPatientMedications(patientId: string): Promise<PatientMedicationView[]> {
   const supabase = getSupabase();
 
-  const { data, error } = await supabase
+  type MedRow = {
+    id: string;
+    name: string;
+    dose: string;
+    purpose: string;
+    instructions: string | null;
+    frequency_hours: number;
+    duration_days: number;
+    treatment_status: "active" | "completed";
+    doctor_id: string;
+    prescription_created_at: string;
+  };
+
+  let rows: MedRow[] = [];
+
+  const { data: viewData, error: viewError } = await supabase
     .from("v_active_medications")
     .select(
       "id, name, dose, purpose, instructions, frequency_hours, duration_days, treatment_status, doctor_id, prescription_created_at",
@@ -235,10 +250,64 @@ export async function getPatientMedications(patientId: string): Promise<PatientM
     .eq("patient_id", patientId)
     .order("prescription_created_at", { ascending: false });
 
-  if (error) throw new Error(error.message);
+  if (!viewError) {
+    rows = (viewData ?? []) as MedRow[];
+  } else {
+    console.warn("[prescriptions] v_active_medications:", viewError.message);
 
-  const rows = data ?? [];
-  const doctorIds = [...new Set(rows.map((r) => r.doctor_id as string))];
+    const { data: prescriptions, error: rxError } = await supabase
+      .from("prescriptions")
+      .select("id, doctor_id, created_at")
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false });
+
+    if (rxError) throw new Error(rxError.message);
+
+    const rxList = prescriptions ?? [];
+    if (rxList.length === 0) return [];
+
+    const rxById = new Map(rxList.map((rx) => [rx.id as string, rx]));
+    const rxIds = rxList.map((rx) => rx.id as string);
+
+    const { data: medications, error: medError } = await supabase
+      .from("medications")
+      .select("id, prescription_id, name, dose, purpose, instructions, frequency_hours, duration_days")
+      .in("prescription_id", rxIds);
+
+    if (medError) throw new Error(medError.message);
+
+    const now = Date.now();
+    rows = (medications ?? [])
+      .map((med) => {
+        const rx = rxById.get(med.prescription_id as string);
+        if (!rx) return null;
+
+        const createdAt = rx.created_at as string;
+        const endMs =
+          new Date(createdAt).getTime() + (med.duration_days as number) * 24 * 60 * 60 * 1000;
+        const treatment_status: "active" | "completed" = now <= endMs ? "active" : "completed";
+
+        return {
+          id: med.id as string,
+          name: med.name as string,
+          dose: med.dose as string,
+          purpose: med.purpose as string,
+          instructions: med.instructions as string | null,
+          frequency_hours: med.frequency_hours as number,
+          duration_days: med.duration_days as number,
+          treatment_status,
+          doctor_id: rx.doctor_id as string,
+          prescription_created_at: createdAt,
+        };
+      })
+      .filter((row): row is MedRow => row !== null)
+      .sort(
+        (a, b) =>
+          new Date(b.prescription_created_at).getTime() - new Date(a.prescription_created_at).getTime(),
+      );
+  }
+
+  const doctorIds = [...new Set(rows.map((r) => r.doctor_id))];
   const doctorMap = new Map<string, string>();
 
   await Promise.all(
@@ -249,15 +318,15 @@ export async function getPatientMedications(patientId: string): Promise<PatientM
   );
 
   return rows.map((row) => ({
-    id: row.id as string,
-    name: row.name as string,
-    dose: row.dose as string,
-    purpose: row.purpose as string,
-    instructions: (row.instructions as string | null) ?? "",
-    frequency_hours: row.frequency_hours as number,
-    duration_days: row.duration_days as number,
-    treatment_status: row.treatment_status as "active" | "completed",
-    doctor_name: doctorMap.get(row.doctor_id as string) ?? "Doctor",
-    prescription_date: row.prescription_created_at as string,
+    id: row.id,
+    name: row.name,
+    dose: row.dose,
+    purpose: row.purpose,
+    instructions: row.instructions ?? "",
+    frequency_hours: row.frequency_hours,
+    duration_days: row.duration_days,
+    treatment_status: row.treatment_status,
+    doctor_name: doctorMap.get(row.doctor_id) ?? "Doctor",
+    prescription_date: row.prescription_created_at,
   }));
 }

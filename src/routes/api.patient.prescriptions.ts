@@ -12,8 +12,10 @@ export const Route = createFileRoute("/api/patient/prescriptions")({
           }
           const data = await getPatientMedications(patientId);
           return Response.json({ data });
-        } catch {
-          return Response.json({ error: "internal_server_error" }, { status: 500 });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "internal_server_error";
+          console.error("[api/patient/prescriptions]", message);
+          return Response.json({ error: message }, { status: 500 });
         }
       },
     },

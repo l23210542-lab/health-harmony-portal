@@ -1,600 +1,546 @@
-# Care Sync — Análisis del sistema actual
+# Care Sync — Análisis del sistema y arquitectura de base de datos
 
 **Proyecto:** `health-harmony-portal`  
-**Producto:** Care Sync — Sistema médico interactivo (MVP / prototipo)  
-**Fecha del análisis:** Mayo 2026  
-**Referencia de requisitos:** [`docs/prd.md`](./prd.md)
+**Producto:** Care Sync — Sistema médico interactivo (MVP / prototipo académico)  
+**Última actualización:** Mayo 2026  
+**Referencias:** [`docs/prd.md`](./prd.md) · [`supabase/migrations/README.md`](../supabase/migrations/README.md)
 
 ---
 
 ## 1. Resumen ejecutivo
 
-Care Sync es una aplicación web de **doble portal** que conecta **doctores** y **pacientes** para digitalizar recetas, gestionar citas (UI preparada) y mejorar la **adherencia al tratamiento** mediante alertas de medicación.
+Care Sync conecta **doctores** y **pacientes** para digitalizar recetas, gestionar citas y mejorar la **adherencia al tratamiento** mediante alertas de medicación programadas en base de datos.
 
-El repositorio implementa un **MVP híbrido**:
+El sistema persiste **todo el dominio clínico en Supabase (PostgreSQL)**. La aplicación (TanStack Start + React) accede a la BD vía `@supabase/supabase-js` desde handlers en `src/server/*`.
 
-| Capa | Estado actual |
-|------|----------------|
-| **Frontend** | Completo en UI (React 19 + TanStack Router/Start + Tailwind 4 + shadcn/Radix) |
-| **Autenticación** | Funcional vía **Supabase** (tablas `doctors` y `patients`) |
-| **Dominio clínico** (recetas, medicamentos, alertas) | Persistido en **`data/db.json`** (archivo local) |
-| **Citas** | Modelo definido en tipos/BD local; **sin API ni persistencia** |
-| **Notificaciones push / cron** | **No implementados** (solo generación de registros `alerts`) |
-| **Portal paciente — datos reales** | Dashboard, recetas y citas usan **datos mock** en el cliente |
+| Capa | Tecnología | Rol |
+|------|------------|-----|
+| **Frontend** | React 19, TanStack Router/Start, Tailwind 4 | Portales `/doctor` y `/patient` |
+| **API** | Rutas `/api/*` (server handlers) | Orquestación y validación (Zod) |
+| **Base de datos** | Supabase PostgreSQL | Auth, recetas, alertas, citas, métricas |
+| **Sesión UI** | `localStorage` | Identidad del usuario logueado (prototipo) |
 
-La arquitectura prioriza demostrar el flujo **crear receta → generar alertas**, mientras que gran parte de la experiencia visual del paciente y del doctor sigue siendo **prototipo estático**.
+**Modelo de identidad:** tablas separadas `doctors` y `patients` (no tabla unificada `users`). Las relaciones clínicas entre doctor y paciente son **lógicas**, vía `prescriptions` y `appointments`.
 
 ---
 
-## 2. Stack tecnológico
+## 2. Arquitectura de la base de datos
 
-### 2.1 Frontend y framework full-stack
+### 2.1 Diagrama entidad-relación
 
-| Tecnología | Versión / uso |
-|------------|----------------|
-| **React** | 19.x |
-| **TanStack Start** | SSR + API routes en el mismo proyecto (`@tanstack/react-start`) |
-| **TanStack Router** | Enrutamiento basado en archivos (`src/routes/*`) |
-| **Vite** | 7.x — bundler y dev server |
-| **TypeScript** | 5.8 |
-| **Tailwind CSS** | 4.x con tokens de diseño en `src/styles.css` |
-| **Radix UI + shadcn** | Componentes en `src/components/ui/*` |
-| **React Hook Form + Zod** | Validación en formularios y APIs |
-| **Lucide React** | Iconografía |
-| **date-fns** | Disponible (uso limitado en pantallas actuales) |
+```mermaid
+erDiagram
+  DOCTORS ||--o{ PRESCRIPTIONS : "doctor_id"
+  PATIENTS ||--o{ PRESCRIPTIONS : "patient_id"
+  PRESCRIPTIONS ||--|{ MEDICATIONS : "prescription_id"
+  MEDICATIONS ||--o{ ALERTS : "medication_id"
+  PATIENTS ||--o{ ALERTS : "patient_id"
+  DOCTORS ||--o{ APPOINTMENTS : "doctor_id"
+  PATIENTS ||--o{ APPOINTMENTS : "patient_id"
 
-### 2.2 Backend embebido (API routes)
+  DOCTORS {
+    uuid id PK
+    text name
+    text email UK
+    text specialty
+    text password
+    timestamptz created_at
+  }
 
-Las rutas bajo `/api/*` se definen como **server handlers** de TanStack Router (no Express separado). Ejecutan lógica en `src/server/*` durante el request.
+  PATIENTS {
+    uuid id PK
+    text name
+    text email UK
+    text password
+    text phone
+    date birth_date
+    timestamptz created_at
+  }
 
-### 2.3 Persistencia
+  PRESCRIPTIONS {
+    uuid id PK
+    uuid doctor_id FK
+    uuid patient_id FK
+    text notes
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-| Almacén | Contenido | Acceso |
-|---------|-----------|--------|
-| **Supabase (PostgreSQL)** | Doctores y pacientes registrados | `@supabase/supabase-js` vía `src/server/supabase.ts` |
-| **`data/db.json`** | Usuarios seed, recetas, medicamentos, alertas, citas (vacío) | `src/server/database.ts` — lectura/escritura con cola de escritura |
+  MEDICATIONS {
+    uuid id PK
+    uuid prescription_id FK
+    text name
+    text dose
+    text purpose
+    text instructions
+    int frequency_hours
+    int duration_days
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-### 2.4 Despliegue previsto
+  ALERTS {
+    uuid id PK
+    uuid patient_id FK
+    uuid medication_id FK
+    timestamptz scheduled_time
+    alert_status status
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-- **Cloudflare Workers** — `wrangler.jsonc` apunta a `@tanstack/react-start/server-entry` con `nodejs_compat`.
-- Variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (inyectadas en build por el preset Lovable).
+  APPOINTMENTS {
+    uuid id PK
+    uuid doctor_id FK
+    uuid patient_id FK
+    timestamptz date_time
+    appointment_status status
+    appointment_mode visit_mode
+    text place
+    text reason
+    timestamptz created_at
+    timestamptz updated_at
+  }
+```
+
+### 2.2 Relación lógica doctor ↔ paciente
+
+No existe tabla puente `doctor_patients`. La relación **N:M** se materializa en:
+
+| Tabla puente implícita | Significado |
+|----------------------|-------------|
+| `prescriptions` | El doctor recetó al paciente |
+| `appointments` | El doctor tiene cita con el paciente |
+
+La vista **`v_doctor_patient_relationship`** unifica ambos orígenes:
+
+```sql
+-- Prescripción O cita vincula doctor_id + patient_id
+SELECT DISTINCT doctor_id, patient_id, 'prescription' AS link_source FROM prescriptions
+UNION
+SELECT DISTINCT doctor_id, patient_id, 'appointment'  AS link_source FROM appointments;
+```
+
+La app usa esta vista para listar “mis pacientes” del doctor (`getDoctorPatients`) y contar pacientes activos en el dashboard.
+
+### 2.3 Tipos enumerados (ENUM)
+
+| Tipo PostgreSQL | Valores | Uso |
+|-----------------|---------|-----|
+| `appointment_status` | `scheduled`, `confirmed`, `completed`, `cancelled` | Estado de cita |
+| `appointment_mode` | `in_person`, `video` | Modalidad de consulta |
+| `alert_status` | `pending`, `taken`, `missed` | Estado de toma de medicamento |
+
+> **Nota:** la columna de modalidad se llama **`visit_mode`** (tipo `appointment_mode`). No se usa el nombre `mode` porque PostgreSQL lo reserva como agregado estadístico `mode()`.
+
+### 2.4 Tablas de autenticación
+
+#### `public.doctors`
+
+| Columna | Descripción |
+|---------|-------------|
+| `id` | UUID, PK |
+| `name`, `email` | Identidad; email único, normalizado a minúsculas en app |
+| `specialty` | Default `'Medicina General'` |
+| `password` | Texto plano (**solo prototipo académico**) |
+| `created_at` | Auditoría |
+
+#### `public.patients`
+
+| Columna | Descripción |
+|---------|-------------|
+| `id` | UUID, PK |
+| `name`, `email`, `password` | Igual que doctores |
+| `phone`, `birth_date` | Perfil extendido (migración 003) |
+| `created_at` | “Paciente desde …” en UI |
+
+**RLS:** políticas abiertas `SELECT`/`INSERT`/`ALL` para `anon` y `authenticated` en tablas clínicas (prototipo; reemplazar en producción).
+
+### 2.5 Tablas clínicas
+
+#### `prescriptions` — cabecera de receta
+
+- FK `doctor_id` → `doctors(id)`
+- FK `patient_id` → `patients(id)`
+- Trigger `set_updated_at` en UPDATE
+
+#### `medications` — líneas de la receta
+
+- FK `prescription_id` → `prescriptions(id)` ON DELETE CASCADE
+- `frequency_hours` > 0, `duration_days` > 0 (CHECK)
+- Campos clínicos: `name`, `dose`, `purpose`, `instructions`
+
+#### `alerts` — motor de adherencia
+
+- FK `patient_id` → `patients(id)`
+- FK `medication_id` → `medications(id)`
+- Una fila = **una toma programada** en `scheduled_time`
+- Estado inicial: `pending`
+
+#### `appointments` — agenda
+
+- FK `doctor_id` → `doctors(id)`, `patient_id` → `patients(id)`
+- `visit_mode`, `place`, `reason` para UI de citas presenciales/videollamada
+
+### 2.6 Vistas analíticas
+
+| Vista | Propósito |
+|-------|-----------|
+| `v_doctor_patient_relationship` | Pares doctor–paciente vinculados |
+| `v_active_medications` | Medicamentos dentro de ventana `created_at + duration_days` |
+| `v_doctor_today_appointments` | Citas del día por doctor (agenda) |
+
+**Lógica de medicamento activo** (`v_active_medications`):
+
+```sql
+CASE
+  WHEN now() <= prescription.created_at + (duration_days * interval '1 day')
+  THEN 'active'
+  ELSE 'completed'
+END AS treatment_status
+```
+
+### 2.7 Índices principales
+
+- `prescriptions(doctor_id)`, `prescriptions(patient_id)`
+- `medications(prescription_id)`
+- `alerts(patient_id)`, `alerts(medication_id)`, `alerts(scheduled_time)`, `alerts(status)`
+- `appointments(doctor_id)`, `appointments(patient_id)`, `appointments(date_time)`
+- `doctors(lower(email))`, `patients(lower(email))`
+
+### 2.8 Orden de migraciones
+
+Ver [`supabase/migrations/README.md`](../supabase/migrations/README.md). Secuencia `001`–`014`:
+
+1. Auth (`doctors`, `patients`)
+2. Perfil paciente (`phone`, `birth_date`)
+3. Tablas clínicas + ENUMs
+4. Funciones, triggers, vistas
+5. RLS prototipo
+6. Correcciones de esquema legacy (`visit_mode`, FKs hacia `doctors`/`patients`, grants RPC, vistas)
+
+**Problema frecuente en despliegues manuales:** si `appointments` o `prescriptions` existían antes con esquema antiguo (FK a `users`, columnas faltantes), aplicar migraciones `008`–`013`.
+
+### 2.9 Integridad referencial (resumen)
+
+```
+doctors ──┬── prescriptions ── medications ── alerts
+          │         │
+patients ─┴─────────┴── appointments
+```
+
+Todas las FKs clínicas deben apuntar a **`doctors`** y **`patients`**, no a una tabla `users` unificada del PRD original.
 
 ---
 
-## 3. Arquitectura del sistema
+## 3. Algoritmos de base de datos
 
-### 3.1 Vista de capas
+La lógica de negocio crítica vive en **PostgreSQL** (funciones PL/pgSQL y SQL) y se invoca vía **RPC Supabase** o consultas directas desde la app.
+
+### 3.1 Algoritmo 1 — Generación de alertas de medicación
+
+**Función:** `public.generate_medication_alerts`  
+**Invocación:** RPC desde `createPrescription()` tras insertar cada `medication`  
+**Permisos:** `GRANT EXECUTE` a `anon`, `authenticated` (migración 009)  
+**Modo:** `SECURITY DEFINER` (ejecuta con privilegios del propietario)
+
+#### Entradas
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `p_medication_id` | uuid | Medicamento recién creado |
+| `p_patient_id` | uuid | Paciente de la receta |
+| `p_frequency_hours` | int | Intervalo entre tomas (horas) |
+| `p_duration_days` | int | Duración total del tratamiento |
+| `p_starts_at` | timestamptz | Ancla temporal (default: `now()` UTC) |
+
+#### Pseudocódigo
+
+```
+total_hours ← duration_days × 24
+elapsed ← 0
+inserted_count ← 0
+
+MIENTRAS elapsed < total_hours:
+  INSERT alert (
+    patient_id,
+    medication_id,
+    scheduled_time = starts_at + elapsed horas,
+    status = 'pending'
+  )
+  inserted_count ← inserted_count + 1
+  elapsed ← elapsed + frequency_hours
+
+RETORNAR inserted_count
+```
+
+#### Ejemplo numérico
+
+| Parámetro | Valor |
+|-----------|-------|
+| `frequency_hours` | 8 |
+| `duration_days` | 7 |
+| Total alertas | ⌈(7×24)/8⌉ = **21** tomas (t=0, 8, 16, …, 160 h) |
+
+#### Fallback en aplicación
+
+Si el RPC falla (permisos, función ausente), `src/server/prescriptions.ts` replica el mismo algoritmo con **inserciones batch** en `alerts` desde TypeScript.
+
+---
+
+### 3.2 Algoritmo 2 — Marcado de alertas vencidas (cron lógico)
+
+**Función:** `public.mark_expired_pending_alerts()`  
+**Invocación:** al cargar dashboard paciente, reportes de adherencia del doctor, y consultas de alertas del día
+
+#### Regla
+
+```
+PARA CADA alert WHERE status = 'pending' AND scheduled_time < now() UTC:
+  status ← 'missed'
+```
+
+Retorna el número de filas actualizadas (`GET DIAGNOSTICS row_count`).
+
+#### Semántica
+
+| Estado | Significado |
+|--------|-------------|
+| `pending` | Toma futura o pendiente de acción |
+| `taken` | Paciente marcó “tomada” (`PATCH /api/alerts/:id`) |
+| `missed` | Pasó la hora programada sin confirmación |
+
+**Fallback app:** si RPC falla, `UPDATE alerts SET status='missed' WHERE …` vía cliente Supabase.
+
+---
+
+### 3.3 Algoritmo 3 — Cálculo de adherencia
+
+**Función:** `public.compute_patient_adherence(p_patient_id uuid)`  
+**Tipo:** SQL estable (función pura sobre lectura)
+
+#### Fórmula
+
+```
+adherencia = 100 × (alertas 'taken') / (alertas 'taken' + alertas 'missed')
+```
+
+- Alertas aún `pending` **no entran** en el denominador (tratamiento no resuelto).
+- Si no hay alertas resueltas → **100%** por defecto (`COALESCE`).
+
+#### Uso en UI
+
+- Dashboard doctor: promedio de adherencia de sus pacientes
+- Dashboard paciente: tarjeta “Adherencia esta semana”
+- Lista de pacientes del doctor: barra de progreso por paciente
+
+**Fallback app:** cuenta manual de filas en `alerts` si el RPC no está disponible.
+
+---
+
+### 3.4 Algoritmo 4 — Clasificación de medicamentos activos
+
+Implementado en la **vista** `v_active_medications` (no es función, pero es regla de BD):
+
+```
+ends_at = prescription.created_at + duration_days días
+
+SI now() <= ends_at  → treatment_status = 'active'
+SI NO                → treatment_status = 'completed'
+```
+
+Alimenta:
+
+- `GET /api/patient/prescriptions` — pestañas Activas / Pasadas
+- Conteo de medicinas activas en dashboards
+
+---
+
+### 3.5 Flujo transaccional: crear receta completa
+
+```mermaid
+sequenceDiagram
+  participant UI as Doctor UI
+  participant API as POST /api/prescriptions
+  participant App as createPrescription()
+  participant DB as Supabase PostgreSQL
+
+  UI->>API: doctorId, patientId, medications[]
+  API->>App: validación Zod
+  App->>DB: SELECT doctors, patients (existencia)
+  App->>DB: INSERT prescriptions
+  loop Por cada medicamento
+    App->>DB: INSERT medications
+    App->>DB: RPC generate_medication_alerts(...)
+    Note over DB: N filas en alerts (pending)
+  end
+  App-->>UI: 201 prescription + medications + alerts
+```
+
+**Orden de operaciones:** receta → medicamento → alertas. Si fallan alertas tras crear medicamento, la receta queda parcial (prototipo; en producción usar transacción única).
+
+---
+
+### 3.6 Flujo transaccional: adherencia del paciente
+
+```mermaid
+sequenceDiagram
+  participant UI as Paciente /patient
+  participant API as GET /api/patient/dashboard
+  participant DB as Supabase
+
+  UI->>API: patientId
+  API->>DB: RPC mark_expired_pending_alerts()
+  API->>DB: RPC compute_patient_adherence()
+  API->>DB: SELECT alerts (hoy) + medications
+  API->>DB: SELECT v_active_medications (count)
+  API->>DB: SELECT appointments (próxima cita)
+  API-->>UI: dashboard JSON
+
+  UI->>API: PATCH /api/alerts/:id { status: taken }
+  API->>DB: UPDATE alerts
+```
+
+---
+
+## 4. Capa de aplicación ↔ base de datos
+
+### 4.1 Módulos servidor
+
+| Módulo | Responsabilidad BD |
+|--------|-------------------|
+| `src/server/supabase.ts` | Cliente singleton |
+| `src/server/doctors.ts` | CRUD auth doctor |
+| `src/server/patients.ts` | CRUD auth paciente, búsqueda |
+| `src/server/prescriptions.ts` | Crear receta, RPC alertas, listado medicamentos |
+| `src/server/alerts.ts` | Cron lógico, adherencia, agenda del día |
+| `src/server/appointments.ts` | CRUD citas |
+| `src/server/dashboard.ts` | Agregaciones doctor/paciente |
+| `src/server/types.ts` | Tipos alineados al esquema SQL |
+
+### 4.2 API REST conectada a Supabase
+
+| Método | Ruta | Operaciones BD |
+|--------|------|----------------|
+| POST | `/api/auth/doctor/*`, `/api/auth/patient/*` | `doctors`, `patients` |
+| GET | `/api/patients`, `/api/doctors` | Búsqueda |
+| POST | `/api/prescriptions` | `prescriptions`, `medications`, RPC alertas |
+| PATCH | `/api/alerts/:id` | `UPDATE alerts.status` |
+| GET/POST | `/api/appointments` | `appointments` |
+| PATCH | `/api/appointments/:id` | Estado de cita |
+| GET | `/api/doctor/dashboard` | Citas hoy, adherencia, `v_doctor_patient_relationship` |
+| GET | `/api/doctor/patients` | Vista relación + métricas |
+| GET | `/api/doctor/missed-alerts` | Alertas `missed` + join medicamentos |
+| GET | `/api/patient/dashboard` | Alertas, adherencia, citas |
+| GET | `/api/patient/prescriptions` | `v_active_medications` |
+| GET | `/api/patient/profile` | `patients` |
+
+### 4.3 Tipos TypeScript (`src/server/types.ts`)
+
+Espejo del esquema SQL: `Prescription`, `Medication`, `AlertLog`, `Appointment`, enums de estado.
+
+---
+
+## 5. Arquitectura del sistema (vista general)
 
 ```mermaid
 flowchart TB
   subgraph Cliente["Navegador"]
     UI["React UI<br/>/doctor · /patient"]
-    LS["localStorage<br/>sesión mock"]
+    LS["localStorage<br/>sesión"]
   end
 
-  subgraph App["TanStack Start (Vite)"]
-    Routes["File routes<br/>páginas + layouts"]
-    API["API routes<br/>/api/*"]
-    Server["src/server/*<br/>lógica de negocio"]
+  subgraph App["TanStack Start"]
+    API["API /api/*"]
+    Server["src/server/*"]
   end
 
-  subgraph Datos["Persistencia"]
-    SB[("Supabase<br/>doctors · patients")]
-    JSON[("data/db.json<br/>prescriptions · medications · alerts")]
+  subgraph BD["Supabase PostgreSQL"]
+    Auth["doctors · patients"]
+    Clinico["prescriptions · medications · alerts · appointments"]
+    Logic["Funciones RPC + Vistas"]
   end
 
-  UI --> Routes
   UI --> LS
   UI -->|fetch| API
   API --> Server
-  Server --> SB
-  Server --> JSON
-  LS -.->|solo auth state| UI
+  Server --> Auth
+  Server --> Clinico
+  Server --> Logic
 ```
 
-### 3.2 Patrón de aplicación
-
-1. **Monolito full-stack TypeScript** — una sola base de código; el servidor y el cliente comparten tipos (`src/server/database.ts`).
-2. **Enrutamiento por convención** — cada archivo en `src/routes/` exporta `Route` con `createFileRoute`; `routeTree.gen.ts` se genera automáticamente.
-3. **Guardas de ruta en cliente** — `beforeLoad` en `/doctor` y `/patient` redirige según `localStorage` (no hay JWT ni cookies de sesión en servidor).
-4. **Dual store de identidades** — IDs de Supabase (UUID) coexisten con IDs seed (`doc-1`, `pat-1`) en `db.json`; `createPrescription` resuelve doctor/paciente en ambos orígenes.
-
-### 3.3 Estructura de directorios relevante
-
-```
-health-harmony-portal/
-├── data/db.json                 # BD de prototipo (dominio clínico)
-├── docs/
-│   ├── prd.md                   # Requisitos de producto
-│   └── analisis-sistema.md      # Este documento
-├── supabase/migrations/         # Esquema SQL auth
-├── src/
-│   ├── routes/                  # Páginas + API (TanStack Router)
-│   ├── server/                  # Lógica servidor (DB, auth, recetas)
-│   ├── lib/auth.ts              # Cliente: sesión en localStorage
-│   ├── components/              # Layouts, AuthScreen, UI kit
-│   └── styles.css               # Design tokens Care Sync
-└── wrangler.jsonc               # Deploy Cloudflare
-```
+**Patrón:** monolito full-stack TypeScript; la BD concentra reglas de scheduling y métricas; la app orquesta flujos y renderiza UI.
 
 ---
 
-## 4. Modelo de datos
+## 6. Pantallas y fuentes de datos (estado actual)
 
-### 4.1 Esquema conceptual (PRD vs implementación)
-
-El PRD define un modelo unificado con tabla `Users` y rol `doctor|patient`. La implementación **separó** identidades:
-
-- **Supabase:** tablas independientes `doctors` y `patients` (sin tabla `users` unificada en producción).
-- **JSON local:** tabla lógica `users[]` con campo `role` para datos de demostración.
-
-### 4.2 Diagrama entidad-relación (dominio clínico en `db.json`)
-
-```mermaid
-erDiagram
-  USER ||--o{ PRESCRIPTION : "doctor_id / patient_id"
-  PRESCRIPTION ||--|{ MEDICATION : "prescription_id"
-  MEDICATION ||--o{ ALERT : "medication_id"
-  USER ||--o{ ALERT : "patient_id"
-  USER ||--o{ APPOINTMENT : "doctor_id / patient_id"
-
-  USER {
-    string id PK
-    enum role "doctor | patient"
-    string name
-    string email
-    string phone
-  }
-
-  PRESCRIPTION {
-    string id PK
-    string doctor_id FK
-    string patient_id FK
-    string created_at
-    string notes
-  }
-
-  MEDICATION {
-    string id PK
-    string prescription_id FK
-    string name
-    string dose
-    string purpose
-    string instructions
-    int frequency_hours
-    int duration_days
-  }
-
-  ALERT {
-    string id PK
-    string patient_id FK
-    string medication_id FK
-    string scheduled_time
-    enum status "pending | taken | missed"
-  }
-
-  APPOINTMENT {
-    string id PK
-    string doctor_id FK
-    string patient_id FK
-    string date_time
-    enum status "scheduled | confirmed | completed | cancelled"
-  }
-```
-
-### 4.3 Tipos TypeScript (`src/server/database.ts`)
-
-| Entidad | Campos clave | Notas |
-|---------|--------------|-------|
-| `User` | `id`, `role`, `name`, `email`, `phone` | Solo en JSON; no sincronizado con Supabase |
-| `Prescription` | `doctor_id`, `patient_id`, `notes`, `created_at` | Cabecera de receta |
-| `Medication` | `frequency_hours`, `duration_days`, `dose`, `purpose`, `instructions` | `dose` es texto libre (ej. "1 cápsula") |
-| `AlertLog` | `scheduled_time` ISO, `status` | Una fila por toma programada |
-| `Appointment` | `date_time`, `status` | Array vacío en datos actuales |
-
-### 4.4 Supabase — tablas de autenticación (prototipo)
-
-**`public.doctors`**
-
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | `uuid` PK | `gen_random_uuid()` |
-| `name` | `text` | Nombre completo |
-| `email` | `text` UNIQUE | Normalizado a minúsculas en app |
-| `specialty` | `text` | Default `'Medicina General'` |
-| `password` | `text` | **Texto plano** (solo prototipo) |
-| `created_at` | `timestamptz` | Auditoría |
-
-**`public.patients`**
-
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | `uuid` PK | |
-| `name` | `text` | |
-| `email` | `text` UNIQUE | |
-| `password` | `text` | **Texto plano** |
-| `created_at` | `timestamptz` | |
-
-**RLS:** habilitado con políticas `anon`/`authenticated` de **lectura e inserción abiertas** (`using (true)`). Comentario en migraciones: reemplazar en producción.
-
-### 4.5 Relaciones y cardinalidad
-
-| Relación | Cardinalidad | Integridad |
-|----------|--------------|------------|
-| Prescription → Doctor | N:1 | Validación en `createPrescription` (local o Supabase) |
-| Prescription → Patient | N:1 | Idem |
-| Medication → Prescription | N:1 | `prescription_id` obligatorio |
-| Alert → Medication | N:1 | Generadas en cascada al crear receta |
-| Alert → Patient | N:1 | Redundante con paciente de la receta (denormalizado para consultas) |
-| Appointment → Doctor/Patient | N:1 | **Sin implementación de CRUD** |
-
-**Observación:** No hay claves foráneas reales en JSON; la integridad es solo lógica en aplicación.
-
-### 4.6 Estado actual de `data/db.json` (ejemplo real)
-
-- **3 usuarios seed** (`doc-1`, `pat-1`, `pat-2`).
-- **2 recetas** — una con IDs seed, otra con UUIDs de Supabase (doctor/paciente registrados en producción de prueba).
-- **Decenas de alertas** generadas automáticamente por frecuencia/duración.
-- **`appointments`: []** — sin datos.
+| Ruta | Fuente de datos |
+|------|-----------------|
+| `/doctor` | `GET /api/doctor/dashboard` |
+| `/doctor/patients` | `GET /api/doctor/patients` |
+| `/doctor/calendar` | `GET /api/appointments?doctorId=` |
+| `/doctor/prescriptions/new` | `POST /api/prescriptions`, `GET /api/patients` |
+| `/doctor/alerts` | `GET /api/doctor/missed-alerts` |
+| `/patient` | `GET /api/patient/dashboard`, `PATCH /api/alerts/:id` |
+| `/patient/prescriptions` | `GET /api/patient/prescriptions` |
+| `/patient/appointments` | `GET/POST /api/appointments` |
+| `/patient/profile` | `GET /api/patient/profile` |
 
 ---
 
-## 5. Lógica de negocio
+## 7. Seguridad y limitaciones (prototipo)
 
-### 5.1 Flujo: doctor crea receta (implementado)
-
-```mermaid
-sequenceDiagram
-  participant D as Doctor UI
-  participant API as POST /api/prescriptions
-  participant P as createPrescription()
-  participant DB as data/db.json
-  participant SB as Supabase
-
-  D->>API: doctorId, patientId, medications[], notes
-  API->>API: Zod validation
-  API->>P: createPrescription(input)
-  P->>SB: getDoctorById / getPatientById (opcional)
-  P->>DB: mutateDb — insert prescription, medications, alerts
-  P-->>API: { prescription, medications, alerts }
-  API-->>D: 201 + payload
-```
-
-**Pantalla:** `/doctor/prescriptions/new` — formulario dinámico de medicamentos, búsqueda de pacientes vía `GET /api/patients?query=`.
-
-**Campos del medicamento en UI:**
-
-- `frequency` y `duration` se envían como **números** (`frequencyHours`, `durationDays`).
-- En la UI el placeholder sugiere horas/días (ej. frecuencia `8` = cada 8 horas).
-
-### 5.2 Algoritmo de generación de alertas
-
-Ubicación: `src/server/prescriptions.ts` → `createPrescription`.
-
-```typescript
-// Pseudocódigo equivalente al código real
-const now = new Date();
-const totalHours = durationDays * 24;
-for (let elapsedHours = 0; elapsedHours < totalHours; elapsedHours += frequencyHours) {
-  scheduledDate = now + elapsedHours horas;
-  crear AlertLog { status: "pending", scheduled_time: ISO };
-}
-```
-
-**Propiedades del algoritmo:**
-
-| Aspecto | Comportamiento |
-|---------|----------------|
-| Punto de inicio | `created_at` de la receta (= `now` al guardar) |
-| Paso | `frequency_hours` (entero positivo) |
-| Límite | Hasta `duration_days × 24` horas |
-| Estados iniciales | Todas `pending` |
-| Zona horaria | Depende del servidor Node (`Date` local) |
-
-**Ejemplo:** `frequency_hours: 3`, `duration_days: 4` → 32 alertas (0, 3, 6, …, 93 horas).
-
-**No implementado (según PRD):**
-
-- Cron que marque `missed` si pasa la hora.
-- Push notifications / Web Push.
-- Alertas de cita (24 h / 1 h antes).
-
-### 5.3 Flujo: paciente marca alerta como tomada (API lista, UI no)
-
-- **Endpoint:** `PATCH /api/alerts/:id` con body `{ status: "pending" | "taken" | "missed" }`.
-- **Implementación:** `updateAlertStatus` en `mutateDb`.
-- **UI paciente (`/patient`):** botón "Marcar como tomada" **sin `fetch`** — datos hardcodeados (Amoxicilina, horarios ficticios).
-
-### 5.4 Búsqueda de pacientes
-
-`GET /api/patients?query=` → `getPatientsByName`:
-
-1. Intenta `searchPatients` en Supabase (orden por nombre, filtro en memoria).
-2. Si Supabase devuelve resultados → mapea a forma `User` con `phone: ""`.
-3. Si falla o vacío → fallback a `db.users` con `role === "patient"`.
-
-### 5.5 Citas
-
-- Tipo `Appointment` y array en schema existen.
-- **No hay** rutas API, pantallas de doctor/paciente conectadas ni escritura en JSON.
-- UIs de calendario y citas usan **arrays constantes** en componentes React.
+| Aspecto | Estado |
+|---------|--------|
+| Contraseñas | Texto plano en `doctors` / `patients` |
+| Sesión | Solo `localStorage`; APIs no validan JWT |
+| RLS | Políticas abiertas en tablas clínicas |
+| Notificaciones push | No implementadas; alertas solo en BD + UI |
+| Cron real | Simulado al consultar (`mark_expired_pending_alerts`) |
+| Transacciones | Receta + alertas no están en una sola TX SQL |
 
 ---
 
-## 6. Autenticación y sesión
-
-### 6.1 Flujo de registro / login
-
-```mermaid
-flowchart LR
-  A[AuthScreen] -->|POST| B["/api/auth/{role}/{login|register}"]
-  B --> C[Supabase insert/select]
-  C --> D[JSON response data]
-  D --> E[localStorage session]
-  E --> F[Redirect /doctor o /patient]
-```
-
-| Rol | Login API | Register API | Clave localStorage |
-|-----|-----------|--------------|-------------------|
-| Doctor | `/api/auth/doctor/login` | `/api/auth/doctor/register` | `care-sync-doctor-session` |
-| Patient | `/api/auth/patient/login` | `/api/auth/patient/register` | `care-sync-patient-session` |
-
-**Sesión (`MockSession`):** `{ id, name, email, role, specialty? }` — **no incluye token** ni expiración.
-
-### 6.2 Protección de rutas
-
-- **`/doctor/*`** y **`/patient/*`:** `beforeLoad` en layout padre verifica `getDoctorSession()` / `getPatientSession()`.
-- Solo corre en **`typeof window !== "undefined"`** (SSR no aplica guard en servidor).
-- Rutas públicas de auth: `/doctor/login`, `/doctor/register`, `/patient/login`, `/patient/register`.
-- Parámetro `?redirect=` guardado en login pero uso limitado tras auth exitosa.
-
-### 6.3 Seguridad (estado prototipo)
-
-| Riesgo | Detalle |
-|--------|---------|
-| Contraseñas en claro | Columna `password` en Supabase; comparación directa en login |
-| Sin autorización en APIs | `POST /api/prescriptions` y `PATCH /api/alerts/:id` no validan sesión del doctor/paciente |
-| RLS abierto | Cualquier cliente con `anon key` puede leer/insertar doctores y pacientes |
-| Sesión solo cliente | Manipulación de `localStorage` podría suplantar identidad en UI (APIs no verifican) |
-
----
-
-## 7. API REST (implementada)
-
-| Método | Ruta | Handler | Descripción |
-|--------|------|---------|-------------|
-| `POST` | `/api/auth/doctor/login` | `loginDoctorFromDb` | Login doctor |
-| `POST` | `/api/auth/doctor/register` | `registerDoctorInDb` | Alta doctor |
-| `POST` | `/api/auth/patient/login` | `loginPatientFromDb` | Login paciente |
-| `POST` | `/api/auth/patient/register` | `registerPatientInDb` | Alta paciente |
-| `GET` | `/api/patients?query=` | `getPatientsByName` | Listado/búsqueda pacientes |
-| `POST` | `/api/prescriptions` | `createPrescription` | Crear receta + meds + alertas |
-| `PATCH` | `/api/alerts/:id` | `updateAlertStatus` | Actualizar estado de alerta |
-
-### 7.1 Contrato `POST /api/prescriptions`
-
-**Request (Zod):**
-
-```json
-{
-  "doctorId": "uuid-o-doc-1",
-  "patientId": "uuid-o-pat-1",
-  "notes": "opcional",
-  "medications": [
-    {
-      "name": "string",
-      "dose": "string",
-      "purpose": "string",
-      "instructions": "string (default \"\")",
-      "frequencyHours": 8,
-      "durationDays": 7
-    }
-  ]
-}
-```
-
-**Response 201:**
-
-```json
-{
-  "data": {
-    "prescription": { "...": "..." },
-    "medications": [ "..." ],
-    "alerts": [ "..." ]
-  }
-}
-```
-
-**Errores:** `400` validación / `medications_required`, `404` doctor/patient not found, `500` interno.
-
-### 7.2 Persistencia JSON — concurrencia
-
-`writeDb` encadena escrituras con una **cola de promesas** (`writeQueue`) para evitar condiciones de carrera al escribir `db.json` en requests concurrentes.
-
----
-
-## 8. Frontend: rutas y experiencia de usuario
-
-### 8.1 Mapa de rutas
-
-| Ruta | Tipo | Datos |
-|------|------|-------|
-| `/` | Landing | Estática |
-| `/doctor/login`, `/doctor/register` | Auth | API Supabase |
-| `/doctor` | Dashboard doctor | **Mock** |
-| `/doctor/calendar` | Calendario | **Mock** |
-| `/doctor/patients` | Lista pacientes | **Mock** |
-| `/doctor/prescriptions/new` | Crear receta | **API real** |
-| `/patient/login`, `/patient/register` | Auth | API Supabase |
-| `/patient` | Dashboard adherencia | **Mock** |
-| `/patient/prescriptions` | Bóveda recetas | **Mock** |
-| `/patient/appointments` | Citas | **Mock** |
-| `/patient/profile` | Perfil | Sesión real + campos mock |
-
-### 8.2 Navegación (según PRD)
-
-**Doctor (sidebar desktop + bottom tab móvil):**
-
-- Dashboard → `/doctor`
-- Calendario → `/doctor/calendar`
-- Pacientes → `/doctor/patients`
-- Crear Receta → `/doctor/prescriptions/new`
-
-**Paciente (bottom tab):**
-
-- Hoy → `/patient`
-- Mis Recetas → `/patient/prescriptions`
-- Citas → `/patient/appointments`
-- Perfil → `/patient/profile`
-
-### 8.3 Layouts
-
-- **`DoctorLayout`:** sidebar fijo ≥ `md`, barra inferior en móvil, tarjeta de sesión y logout.
-- **`PatientLayout`:** header con logo, campana de notificaciones (decorativa), contenido centrado `max-w-5xl`, bottom nav.
-
-### 8.4 Pantalla funcional destacada: Nueva receta
-
-Archivo: `src/routes/doctor.prescriptions.new.tsx`
-
-- Carga pacientes con debounce implícito vía `useEffect` al cambiar búsqueda.
-- Formulario multi-medicamento (agregar/eliminar filas).
-- Validación cliente antes de `POST`.
-- Mensaje de éxito confirma generación automática de alertas.
-- Botón "Guardar borrador" **sin implementar**.
-
----
-
-## 9. Diseño visual y UX
-
-### 9.1 Identidad (Care Sync)
-
-Definido en `src/styles.css` y alineado al PRD:
-
-| Token | Valor / intención |
-|-------|-------------------|
-| Primario | Azul médico ~ `#0052FF` (`oklch(0.55 0.22 260)`) |
-| Éxito | Verde menta ~ `#10B981` |
-| Fondo | Blanco / gris suave `#F8FAFC` |
-| Tipografía | **Plus Jakarta Sans** (Google Fonts) |
-| Radios | `--radius: 1rem`, tarjetas `rounded-3xl` |
-| Sombras | `--shadow-soft`, `--shadow-card` |
-| Gradientes | `--gradient-primary`, `--gradient-success`, `--gradient-hero` |
-
-### 9.2 Accesibilidad (intención de diseño)
-
-- Tipografía grande (`text-base` mínimo en cuerpo, títulos `text-3xl`+).
-- Botones táctiles `min-h-14` / `min-h-16` en acciones críticas.
-- Alto contraste en hero y CTAs.
-- Estados visuales claros: `pending`, `taken`, `next` en listas de horario.
-
-### 9.3 Componentes UI
-
-Kit **shadcn/ui** completo en `src/components/ui/` (Button, Card, Dialog, Form, Sidebar, etc.). Las pantallas de producto usan mayormente **HTML semántico + Tailwind** custom en lugar del kit compuesto.
-
-### 9.4 Componentes de dominio
-
-| Componente | Rol |
-|------------|-----|
-| `Logo` | Marca Care Sync |
-| `AuthScreen` | Login/registro unificado por rol |
-| `DoctorLayout` / `PatientLayout` | Shell de cada portal |
-
----
-
-## 10. Brecha frente al PRD (matriz de cumplimiento)
+## 8. Brecha frente al PRD
 
 | Requisito PRD | Estado |
 |---------------|--------|
-| Portal doctor — calendario interactivo | UI mock; sin backend |
-| Portal doctor — prescription builder | **Implementado** (parcial: sin autocompletado de fármacos) |
-| Portal doctor — gestión citas | No implementado |
-| Portal paciente — dashboard adherencia | UI mock; sin lectura de `alerts` |
-| Portal paciente — bóveda recetas | UI mock; sin `GET` de recetas |
-| Portal paciente — agendar citas | UI mock |
-| Motor de alertas push/in-app | Solo registros en JSON; sin push ni polling |
-| Cron evaluación hora actual | No existe |
-| Recordatorios de cita | No existe |
-| Users unificados | Separado doctors/patients + users JSON legacy |
-| Next.js / Expo | Usa **TanStack Start + Vite** (desvío técnico aceptable para MVP) |
+| Crear receta + alertas automáticas | **Implementado** (BD + API) |
+| Paciente marca toma | **Implementado** (`PATCH /api/alerts/:id`) |
+| Dashboard adherencia | **Implementado** (RPC + UI) |
+| Citas doctor ↔ paciente | **Implementado** (CRUD básico) |
+| Tabla `Users` unificada | **No** — `doctors` + `patients` |
+| Push / Web Push | Pendiente |
+| Cron programado (Edge/pg_cron) | Pendiente — lógica existe, invocación es on-read |
+| Supabase Auth con hash | Pendiente |
 
 ---
 
-## 11. Flujo de datos end-to-end (lo que sí funciona hoy)
+## 9. Glosario
 
-1. Doctor se registra → fila en Supabase `doctors`.
-2. Paciente se registra → fila en Supabase `patients`.
-3. Doctor inicia sesión → sesión en `localStorage`.
-4. Doctor abre **Nueva receta**, busca paciente → `GET /api/patients` devuelve pacientes Supabase.
-5. Doctor envía receta → `POST /api/prescriptions` escribe en `db.json` receta, medicamentos y N alertas.
-6. Paciente **no ve** esas recetas/alertas en su dashboard (aún mock).
-7. Un cliente externo podría `PATCH /api/alerts/:id` para marcar `taken` (sin autenticación).
-
----
-
-## 12. Consideraciones de despliegue y entorno
-
-### 12.1 Desarrollo local
-
-```bash
-npm run dev   # Vite dev — TanStack Start
-```
-
-- `db.json` se crea automáticamente con seed si no existe (`ensureDatabaseFile`).
-- Supabase opcional: sin variables, auth devuelve `503 supabase_not_configured`.
-
-### 12.2 Producción (Cloudflare)
-
-- El archivo `data/db.json` en Workers **no es durable** entre invocaciones/regiones sin almacenamiento externo (R2, D1, Supabase tables).
-- Para producción real, el dominio clínico debería migrarse a **Supabase/Postgres** con el mismo modelo ER.
-
-### 12.3 Variables de entorno
-
-| Variable | Uso |
-|----------|-----|
-| `VITE_SUPABASE_URL` | Cliente Supabase |
-| `VITE_SUPABASE_ANON_KEY` | Clave pública anon |
+| Término | Definición |
+|---------|------------|
+| **Alerta** | Fila en `alerts`: una toma programada en `scheduled_time` |
+| **Adherencia** | % de tomas `taken` sobre (`taken` + `missed`) |
+| **Relación doctor–paciente** | Par vinculado por receta o cita (vista unificada) |
+| **RPC** | Llamada a función PostgreSQL vía Supabase (`supabase.rpc`) |
+| **visit_mode** | Columna de modalidad de cita (`in_person` / `video`) |
 
 ---
 
-## 13. Recomendaciones técnicas (orden sugerido)
+## 10. Referencias de código y SQL
 
-1. **Unificar persistencia** — tablas `prescriptions`, `medications`, `alerts`, `appointments` en Supabase con FKs y RLS por rol.
-2. **API de lectura** — `GET /api/prescriptions?patientId=`, `GET /api/alerts?patientId=&from=&to=` para alimentar UI paciente.
-3. **Conectar UI paciente** — reemplazar mocks en `/patient`, `/patient/prescriptions` con React Query.
-4. **Autorización** — validar sesión (JWT Supabase Auth o cookies firmadas) en todos los handlers.
-5. **Auth segura** — Supabase Auth con hash; eliminar columna `password` en tablas custom.
-6. **Cron / Edge scheduled** — job que pase `pending` → `missed` y dispare notificaciones.
-7. **Web Push** — Service Worker + suscripción por paciente.
-8. **Citas** — CRUD completo y sincronización calendario doctor ↔ paciente.
-
----
-
-## 14. Glosario
-
-| Término | Significado en este proyecto |
-|---------|------------------------------|
-| **Care Sync** | Nombre comercial del producto |
-| **Alerta** | Registro `AlertLog` — una toma de medicamento programada |
-| **Adherencia** | Porcentaje de tomas marcadas como `taken` (métrica UI aún estática) |
-| **Mock (UI)** | Datos hardcodeados en componentes, no provenientes del servidor |
-| **MutateDb** | Patrón read-modify-write sobre `db.json` |
+| Responsabilidad | Ubicación |
+|-----------------|-----------|
+| Esquema SQL completo | `supabase/migrations/001`–`014` |
+| Funciones y vistas | `supabase/migrations/005_functions_views.sql` |
+| Grants RPC | `supabase/migrations/009_grants_and_rpc.sql` |
+| Crear receta + alertas | `src/server/prescriptions.ts` |
+| Algoritmos alertas/adherencia | `src/server/alerts.ts` |
+| Dashboards | `src/server/dashboard.ts` |
+| Tipos dominio | `src/server/types.ts` |
 
 ---
 
-## 15. Referencias de código clave
-
-| Responsabilidad | Archivo |
-|-----------------|---------|
-| Esquema y persistencia JSON | `src/server/database.ts` |
-| Creación receta + alertas | `src/server/prescriptions.ts` |
-| Auth Supabase doctor/paciente | `src/server/doctors.ts`, `src/server/patients.ts` |
-| Sesión cliente | `src/lib/auth.ts` |
-| API recetas | `src/routes/api.prescriptions.ts` |
-| API alertas | `src/routes/api.alerts.$id.ts` |
-| Formulario receta | `src/routes/doctor.prescriptions.new.tsx` |
-| Design system | `src/styles.css` |
-| Migraciones SQL | `supabase/migrations/001_doctors.sql`, `002_patients.sql` |
-
----
-
-*Documento generado a partir del análisis del código fuente del repositorio `health-harmony-portal`. Para cambios de arquitectura, actualizar este archivo junto con el PRD.*
+*Documento alineado con el estado del repositorio tras migración completa a Supabase. Para cambios de esquema, actualizar migraciones SQL y este archivo.*

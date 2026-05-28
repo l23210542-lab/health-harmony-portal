@@ -1,0 +1,28 @@
+Care Sync - Proyecto de Administracion de Base de Datos
+======================================================
+
+INICIO RAPIDO (Windows)
+-----------------------
+1. Instalar Node.js LTS: https://nodejs.org/
+2. Entrar a la carpeta: health-harmony-portal
+3. Doble clic en: INICIAR.bat
+4. Abrir en el navegador: http://localhost:8080
+
+REQUISITOS
+----------
+- Windows 10/11 con Node.js 20+
+- Conexion a internet (base de datos en Supabase)
+
+DOCUMENTACION
+-------------
+- docs/analisis-sistema.md  (arquitectura BD y algoritmos)
+- docs/prd.md               (requisitos del producto)
+- docs/GUIA-ENTREGA-USB.md  (guia completa de entrega)
+- supabase/migrations/      (scripts SQL)
+
+DEMO SUGERIDA
+-------------
+1. Registrar doctor y paciente (o usar cuentas de prueba)
+2. Doctor: crear receta para el paciente
+3. Paciente: ver recetas, marcar alerta en "Hoy"
+4. Doctor: ver dashboard y reportes de adherencia
