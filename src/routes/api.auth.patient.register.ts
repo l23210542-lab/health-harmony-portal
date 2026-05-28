@@ -6,6 +6,8 @@ const registerSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(4),
+  phone: z.string().optional(),
+  birthDate: z.string().optional(),
 });
 
 export const Route = createFileRoute("/api/auth/patient/register")({

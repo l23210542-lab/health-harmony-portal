@@ -37,12 +37,18 @@ export const Route = createFileRoute("/api/prescriptions")({
             );
           }
           if (error instanceof Error) {
-            if (error.message === "doctor_not_found" || error.message === "patient_not_found") {
+            if (
+              error.message === "doctor_not_found" ||
+              error.message === "patient_not_found" ||
+              error.message.startsWith("doctor_or_patient_not_in_database")
+            ) {
               return Response.json({ error: error.message }, { status: 404 });
             }
             if (error.message === "medications_required") {
               return Response.json({ error: error.message }, { status: 400 });
             }
+            console.error("[api/prescriptions]", error.message);
+            return Response.json({ error: error.message }, { status: 500 });
           }
           return Response.json({ error: "internal_server_error" }, { status: 500 });
         }

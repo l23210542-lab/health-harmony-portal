@@ -158,6 +158,8 @@ export async function registerPatient(input: {
   name: string;
   email: string;
   password: string;
+  phone?: string;
+  birthDate?: string;
 }): Promise<MockSession> {
   const response = await fetch("/api/auth/patient/register", {
     method: "POST",
@@ -166,6 +168,8 @@ export async function registerPatient(input: {
       name: input.name.trim(),
       email: input.email.trim(),
       password: input.password,
+      phone: input.phone?.trim(),
+      birthDate: input.birthDate,
     }),
   });
 

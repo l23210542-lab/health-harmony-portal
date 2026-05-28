@@ -18,6 +18,8 @@ export async function registerPatientInDb(input: {
   name: string;
   email: string;
   password: string;
+  phone?: string;
+  birthDate?: string;
 }): Promise<PatientPublic> {
   const supabase = getSupabase();
   const email = normalizeEmail(input.email);
@@ -28,6 +30,8 @@ export async function registerPatientInDb(input: {
       name: input.name.trim(),
       email,
       password: input.password,
+      phone: input.phone?.trim() || null,
+      birth_date: input.birthDate || null,
     })
     .select("id, name, email")
     .single();

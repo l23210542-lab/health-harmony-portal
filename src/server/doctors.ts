@@ -74,3 +74,25 @@ export async function getDoctorById(id: string): Promise<DoctorPublic | null> {
   if (error) throw new Error(error.message || "fetch_failed");
   return data ? toPublicDoctor(data) : null;
 }
+
+export async function listDoctors(query?: string): Promise<DoctorPublic[]> {
+  const supabase = getSupabase();
+  const normalized = query?.trim().toLowerCase() ?? "";
+
+  const { data, error } = await supabase
+    .from("doctors")
+    .select("id, name, email, specialty")
+    .order("name");
+
+  if (error) throw new Error(error.message || "list_failed");
+
+  const doctors = (data ?? []).map(toPublicDoctor);
+  if (!normalized) return doctors;
+
+  return doctors.filter(
+    (d) =>
+      d.name.toLowerCase().includes(normalized) ||
+      d.email.toLowerCase().includes(normalized) ||
+      d.specialty.toLowerCase().includes(normalized),
+  );
+}

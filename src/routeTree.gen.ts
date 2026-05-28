@@ -26,8 +26,16 @@ import { Route as DoctorCalendarRouteImport } from './routes/doctor.calendar'
 import { Route as DoctorAlertsRouteImport } from './routes/doctor.alerts'
 import { Route as ApiPrescriptionsRouteImport } from './routes/api.prescriptions'
 import { Route as ApiPatientsRouteImport } from './routes/api.patients'
+import { Route as ApiDoctorsRouteImport } from './routes/api.doctors'
+import { Route as ApiAppointmentsRouteImport } from './routes/api.appointments'
 import { Route as DoctorPrescriptionsNewRouteImport } from './routes/doctor.prescriptions.new'
+import { Route as ApiPatientProfileRouteImport } from './routes/api.patient.profile'
+import { Route as ApiPatientPrescriptionsRouteImport } from './routes/api.patient.prescriptions'
+import { Route as ApiPatientDashboardRouteImport } from './routes/api.patient.dashboard'
+import { Route as ApiDoctorPatientsRouteImport } from './routes/api.doctor.patients'
 import { Route as ApiDoctorMissedAlertsRouteImport } from './routes/api.doctor.missed-alerts'
+import { Route as ApiDoctorDashboardRouteImport } from './routes/api.doctor.dashboard'
+import { Route as ApiAppointmentsIdRouteImport } from './routes/api.appointments.$id'
 import { Route as ApiAlertsIdRouteImport } from './routes/api.alerts.$id'
 import { Route as ApiAuthPatientRegisterRouteImport } from './routes/api.auth.patient.register'
 import { Route as ApiAuthPatientLoginRouteImport } from './routes/api.auth.patient.login'
@@ -119,15 +127,55 @@ const ApiPatientsRoute = ApiPatientsRouteImport.update({
   path: '/api/patients',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDoctorsRoute = ApiDoctorsRouteImport.update({
+  id: '/api/doctors',
+  path: '/api/doctors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAppointmentsRoute = ApiAppointmentsRouteImport.update({
+  id: '/api/appointments',
+  path: '/api/appointments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DoctorPrescriptionsNewRoute = DoctorPrescriptionsNewRouteImport.update({
   id: '/prescriptions/new',
   path: '/prescriptions/new',
   getParentRoute: () => DoctorRoute,
 } as any)
+const ApiPatientProfileRoute = ApiPatientProfileRouteImport.update({
+  id: '/api/patient/profile',
+  path: '/api/patient/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPatientPrescriptionsRoute = ApiPatientPrescriptionsRouteImport.update({
+  id: '/api/patient/prescriptions',
+  path: '/api/patient/prescriptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPatientDashboardRoute = ApiPatientDashboardRouteImport.update({
+  id: '/api/patient/dashboard',
+  path: '/api/patient/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDoctorPatientsRoute = ApiDoctorPatientsRouteImport.update({
+  id: '/api/doctor/patients',
+  path: '/api/doctor/patients',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDoctorMissedAlertsRoute = ApiDoctorMissedAlertsRouteImport.update({
   id: '/api/doctor/missed-alerts',
   path: '/api/doctor/missed-alerts',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDoctorDashboardRoute = ApiDoctorDashboardRouteImport.update({
+  id: '/api/doctor/dashboard',
+  path: '/api/doctor/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAppointmentsIdRoute = ApiAppointmentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiAppointmentsRoute,
 } as any)
 const ApiAlertsIdRoute = ApiAlertsIdRouteImport.update({
   id: '/api/alerts/$id',
@@ -159,6 +207,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/doctor': typeof DoctorRouteWithChildren
   '/patient': typeof PatientRouteWithChildren
+  '/api/appointments': typeof ApiAppointmentsRouteWithChildren
+  '/api/doctors': typeof ApiDoctorsRoute
   '/api/patients': typeof ApiPatientsRoute
   '/api/prescriptions': typeof ApiPrescriptionsRoute
   '/doctor/alerts': typeof DoctorAlertsRoute
@@ -174,7 +224,13 @@ export interface FileRoutesByFullPath {
   '/doctor/': typeof DoctorIndexRoute
   '/patient/': typeof PatientIndexRoute
   '/api/alerts/$id': typeof ApiAlertsIdRoute
+  '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/doctor/dashboard': typeof ApiDoctorDashboardRoute
   '/api/doctor/missed-alerts': typeof ApiDoctorMissedAlertsRoute
+  '/api/doctor/patients': typeof ApiDoctorPatientsRoute
+  '/api/patient/dashboard': typeof ApiPatientDashboardRoute
+  '/api/patient/prescriptions': typeof ApiPatientPrescriptionsRoute
+  '/api/patient/profile': typeof ApiPatientProfileRoute
   '/doctor/prescriptions/new': typeof DoctorPrescriptionsNewRoute
   '/api/auth/doctor/login': typeof ApiAuthDoctorLoginRoute
   '/api/auth/doctor/register': typeof ApiAuthDoctorRegisterRoute
@@ -183,6 +239,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/appointments': typeof ApiAppointmentsRouteWithChildren
+  '/api/doctors': typeof ApiDoctorsRoute
   '/api/patients': typeof ApiPatientsRoute
   '/api/prescriptions': typeof ApiPrescriptionsRoute
   '/doctor/alerts': typeof DoctorAlertsRoute
@@ -198,7 +256,13 @@ export interface FileRoutesByTo {
   '/doctor': typeof DoctorIndexRoute
   '/patient': typeof PatientIndexRoute
   '/api/alerts/$id': typeof ApiAlertsIdRoute
+  '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/doctor/dashboard': typeof ApiDoctorDashboardRoute
   '/api/doctor/missed-alerts': typeof ApiDoctorMissedAlertsRoute
+  '/api/doctor/patients': typeof ApiDoctorPatientsRoute
+  '/api/patient/dashboard': typeof ApiPatientDashboardRoute
+  '/api/patient/prescriptions': typeof ApiPatientPrescriptionsRoute
+  '/api/patient/profile': typeof ApiPatientProfileRoute
   '/doctor/prescriptions/new': typeof DoctorPrescriptionsNewRoute
   '/api/auth/doctor/login': typeof ApiAuthDoctorLoginRoute
   '/api/auth/doctor/register': typeof ApiAuthDoctorRegisterRoute
@@ -210,6 +274,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/doctor': typeof DoctorRouteWithChildren
   '/patient': typeof PatientRouteWithChildren
+  '/api/appointments': typeof ApiAppointmentsRouteWithChildren
+  '/api/doctors': typeof ApiDoctorsRoute
   '/api/patients': typeof ApiPatientsRoute
   '/api/prescriptions': typeof ApiPrescriptionsRoute
   '/doctor/alerts': typeof DoctorAlertsRoute
@@ -225,7 +291,13 @@ export interface FileRoutesById {
   '/doctor/': typeof DoctorIndexRoute
   '/patient/': typeof PatientIndexRoute
   '/api/alerts/$id': typeof ApiAlertsIdRoute
+  '/api/appointments/$id': typeof ApiAppointmentsIdRoute
+  '/api/doctor/dashboard': typeof ApiDoctorDashboardRoute
   '/api/doctor/missed-alerts': typeof ApiDoctorMissedAlertsRoute
+  '/api/doctor/patients': typeof ApiDoctorPatientsRoute
+  '/api/patient/dashboard': typeof ApiPatientDashboardRoute
+  '/api/patient/prescriptions': typeof ApiPatientPrescriptionsRoute
+  '/api/patient/profile': typeof ApiPatientProfileRoute
   '/doctor/prescriptions/new': typeof DoctorPrescriptionsNewRoute
   '/api/auth/doctor/login': typeof ApiAuthDoctorLoginRoute
   '/api/auth/doctor/register': typeof ApiAuthDoctorRegisterRoute
@@ -238,6 +310,8 @@ export interface FileRouteTypes {
     | '/'
     | '/doctor'
     | '/patient'
+    | '/api/appointments'
+    | '/api/doctors'
     | '/api/patients'
     | '/api/prescriptions'
     | '/doctor/alerts'
@@ -253,7 +327,13 @@ export interface FileRouteTypes {
     | '/doctor/'
     | '/patient/'
     | '/api/alerts/$id'
+    | '/api/appointments/$id'
+    | '/api/doctor/dashboard'
     | '/api/doctor/missed-alerts'
+    | '/api/doctor/patients'
+    | '/api/patient/dashboard'
+    | '/api/patient/prescriptions'
+    | '/api/patient/profile'
     | '/doctor/prescriptions/new'
     | '/api/auth/doctor/login'
     | '/api/auth/doctor/register'
@@ -262,6 +342,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/api/appointments'
+    | '/api/doctors'
     | '/api/patients'
     | '/api/prescriptions'
     | '/doctor/alerts'
@@ -277,7 +359,13 @@ export interface FileRouteTypes {
     | '/doctor'
     | '/patient'
     | '/api/alerts/$id'
+    | '/api/appointments/$id'
+    | '/api/doctor/dashboard'
     | '/api/doctor/missed-alerts'
+    | '/api/doctor/patients'
+    | '/api/patient/dashboard'
+    | '/api/patient/prescriptions'
+    | '/api/patient/profile'
     | '/doctor/prescriptions/new'
     | '/api/auth/doctor/login'
     | '/api/auth/doctor/register'
@@ -288,6 +376,8 @@ export interface FileRouteTypes {
     | '/'
     | '/doctor'
     | '/patient'
+    | '/api/appointments'
+    | '/api/doctors'
     | '/api/patients'
     | '/api/prescriptions'
     | '/doctor/alerts'
@@ -303,7 +393,13 @@ export interface FileRouteTypes {
     | '/doctor/'
     | '/patient/'
     | '/api/alerts/$id'
+    | '/api/appointments/$id'
+    | '/api/doctor/dashboard'
     | '/api/doctor/missed-alerts'
+    | '/api/doctor/patients'
+    | '/api/patient/dashboard'
+    | '/api/patient/prescriptions'
+    | '/api/patient/profile'
     | '/doctor/prescriptions/new'
     | '/api/auth/doctor/login'
     | '/api/auth/doctor/register'
@@ -315,10 +411,17 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DoctorRoute: typeof DoctorRouteWithChildren
   PatientRoute: typeof PatientRouteWithChildren
+  ApiAppointmentsRoute: typeof ApiAppointmentsRouteWithChildren
+  ApiDoctorsRoute: typeof ApiDoctorsRoute
   ApiPatientsRoute: typeof ApiPatientsRoute
   ApiPrescriptionsRoute: typeof ApiPrescriptionsRoute
   ApiAlertsIdRoute: typeof ApiAlertsIdRoute
+  ApiDoctorDashboardRoute: typeof ApiDoctorDashboardRoute
   ApiDoctorMissedAlertsRoute: typeof ApiDoctorMissedAlertsRoute
+  ApiDoctorPatientsRoute: typeof ApiDoctorPatientsRoute
+  ApiPatientDashboardRoute: typeof ApiPatientDashboardRoute
+  ApiPatientPrescriptionsRoute: typeof ApiPatientPrescriptionsRoute
+  ApiPatientProfileRoute: typeof ApiPatientProfileRoute
   ApiAuthDoctorLoginRoute: typeof ApiAuthDoctorLoginRoute
   ApiAuthDoctorRegisterRoute: typeof ApiAuthDoctorRegisterRoute
   ApiAuthPatientLoginRoute: typeof ApiAuthPatientLoginRoute
@@ -446,6 +549,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPatientsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/doctors': {
+      id: '/api/doctors'
+      path: '/api/doctors'
+      fullPath: '/api/doctors'
+      preLoaderRoute: typeof ApiDoctorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/appointments': {
+      id: '/api/appointments'
+      path: '/api/appointments'
+      fullPath: '/api/appointments'
+      preLoaderRoute: typeof ApiAppointmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/doctor/prescriptions/new': {
       id: '/doctor/prescriptions/new'
       path: '/prescriptions/new'
@@ -453,12 +570,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DoctorPrescriptionsNewRouteImport
       parentRoute: typeof DoctorRoute
     }
+    '/api/patient/profile': {
+      id: '/api/patient/profile'
+      path: '/api/patient/profile'
+      fullPath: '/api/patient/profile'
+      preLoaderRoute: typeof ApiPatientProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/patient/prescriptions': {
+      id: '/api/patient/prescriptions'
+      path: '/api/patient/prescriptions'
+      fullPath: '/api/patient/prescriptions'
+      preLoaderRoute: typeof ApiPatientPrescriptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/patient/dashboard': {
+      id: '/api/patient/dashboard'
+      path: '/api/patient/dashboard'
+      fullPath: '/api/patient/dashboard'
+      preLoaderRoute: typeof ApiPatientDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/doctor/patients': {
+      id: '/api/doctor/patients'
+      path: '/api/doctor/patients'
+      fullPath: '/api/doctor/patients'
+      preLoaderRoute: typeof ApiDoctorPatientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/doctor/missed-alerts': {
       id: '/api/doctor/missed-alerts'
       path: '/api/doctor/missed-alerts'
       fullPath: '/api/doctor/missed-alerts'
       preLoaderRoute: typeof ApiDoctorMissedAlertsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/doctor/dashboard': {
+      id: '/api/doctor/dashboard'
+      path: '/api/doctor/dashboard'
+      fullPath: '/api/doctor/dashboard'
+      preLoaderRoute: typeof ApiDoctorDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/appointments/$id': {
+      id: '/api/appointments/$id'
+      path: '/$id'
+      fullPath: '/api/appointments/$id'
+      preLoaderRoute: typeof ApiAppointmentsIdRouteImport
+      parentRoute: typeof ApiAppointmentsRoute
     }
     '/api/alerts/$id': {
       id: '/api/alerts/$id'
@@ -542,14 +701,33 @@ const PatientRouteChildren: PatientRouteChildren = {
 const PatientRouteWithChildren =
   PatientRoute._addFileChildren(PatientRouteChildren)
 
+interface ApiAppointmentsRouteChildren {
+  ApiAppointmentsIdRoute: typeof ApiAppointmentsIdRoute
+}
+
+const ApiAppointmentsRouteChildren: ApiAppointmentsRouteChildren = {
+  ApiAppointmentsIdRoute: ApiAppointmentsIdRoute,
+}
+
+const ApiAppointmentsRouteWithChildren = ApiAppointmentsRoute._addFileChildren(
+  ApiAppointmentsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DoctorRoute: DoctorRouteWithChildren,
   PatientRoute: PatientRouteWithChildren,
+  ApiAppointmentsRoute: ApiAppointmentsRouteWithChildren,
+  ApiDoctorsRoute: ApiDoctorsRoute,
   ApiPatientsRoute: ApiPatientsRoute,
   ApiPrescriptionsRoute: ApiPrescriptionsRoute,
   ApiAlertsIdRoute: ApiAlertsIdRoute,
+  ApiDoctorDashboardRoute: ApiDoctorDashboardRoute,
   ApiDoctorMissedAlertsRoute: ApiDoctorMissedAlertsRoute,
+  ApiDoctorPatientsRoute: ApiDoctorPatientsRoute,
+  ApiPatientDashboardRoute: ApiPatientDashboardRoute,
+  ApiPatientPrescriptionsRoute: ApiPatientPrescriptionsRoute,
+  ApiPatientProfileRoute: ApiPatientProfileRoute,
   ApiAuthDoctorLoginRoute: ApiAuthDoctorLoginRoute,
   ApiAuthDoctorRegisterRoute: ApiAuthDoctorRegisterRoute,
   ApiAuthPatientLoginRoute: ApiAuthPatientLoginRoute,

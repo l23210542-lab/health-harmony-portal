@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, ChevronRight, Clock, FileText, Plus, TrendingUp, Users } from "lucide-react";
+import { CalendarDays, ChevronRight, Clock, FileText, Loader2, Plus, TrendingUp, Users } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { getDoctorSession } from "@/lib/auth";
+import { formatTime, initials } from "@/lib/format";
+import type { DoctorDashboardStats } from "@/server/dashboard";
 
 export const Route = createFileRoute("/doctor/")({
   component: DoctorDashboard,
@@ -8,6 +11,34 @@ export const Route = createFileRoute("/doctor/")({
 
 function DoctorDashboard() {
   const session = getDoctorSession();
+  const [stats, setStats] = useState<DoctorDashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    if (!session?.id) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/doctor/dashboard?doctorId=${encodeURIComponent(session.id)}`);
+      if (!res.ok) throw new Error("No se pudo cargar el dashboard.");
+      const json = (await res.json()) as { data: DoctorDashboardStats };
+      setStats(json.data);
+    } catch (err) {
+      setStats(null);
+      setError(err instanceof Error ? err.message : "Error al cargar el dashboard.");
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.id]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const now = new Date();
+  const todayAppointments = stats?.todayAppointments ?? [];
+  const recentPatients = stats?.recentPatients ?? [];
 
   return (
     <div className="space-y-8">
@@ -25,60 +56,97 @@ function DoctorDashboard() {
         </Link>
       </header>
 
-      {/* Stats */}
-      <section className="grid gap-4 md:grid-cols-4">
-        <Stat icon={<CalendarDays className="h-6 w-6" />} label="Citas hoy" value="8" tone="primary" />
-        <Stat icon={<Users className="h-6 w-6" />} label="Pacientes activos" value="142" tone="primary" />
-        <Stat icon={<FileText className="h-6 w-6" />} label="Recetas esta semana" value="34" tone="success" />
-        <Stat icon={<TrendingUp className="h-6 w-6" />} label="Adherencia promedio" value="87%" tone="success" />
-      </section>
+      {loading ? (
+        <div className="flex min-h-40 items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      ) : error ? (
+        <div className="rounded-3xl border border-destructive/30 bg-destructive/5 p-6">
+          <p className="font-semibold text-destructive">{error}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Si acabas de migrar la base de datos, ejecuta en Supabase el renombrado{" "}
+            <code className="rounded bg-muted px-1">mode → visit_mode</code> en la tabla{" "}
+            <code className="rounded bg-muted px-1">appointments</code> y vuelve a intentar.
+          </p>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="mt-4 rounded-2xl bg-primary px-5 py-2 text-sm font-bold text-primary-foreground"
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : (
+        <>
+          <section className="grid gap-4 md:grid-cols-4">
+            <Stat icon={<CalendarDays className="h-6 w-6" />} label="Citas hoy" value={String(stats?.appointmentsToday ?? 0)} tone="primary" />
+            <Stat icon={<Users className="h-6 w-6" />} label="Pacientes activos" value={String(stats?.activePatients ?? 0)} tone="primary" />
+            <Stat icon={<FileText className="h-6 w-6" />} label="Recetas esta semana" value={String(stats?.prescriptionsThisWeek ?? 0)} tone="success" />
+            <Stat icon={<TrendingUp className="h-6 w-6" />} label="Adherencia promedio" value={`${stats?.averageAdherence ?? 100}%`} tone="success" />
+          </section>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Today schedule */}
-        <section className="rounded-3xl border border-border bg-card p-6 shadow-soft lg:col-span-2">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-xl font-extrabold tracking-tight">Agenda de hoy</h2>
-            <Link to="/doctor/calendar" className="text-sm font-bold text-primary hover:underline">
-              Ver calendario →
-            </Link>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <section className="rounded-3xl border border-border bg-card p-6 shadow-soft lg:col-span-2">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="text-xl font-extrabold tracking-tight">Agenda de hoy</h2>
+                <Link from="/doctor" to="calendar" className="text-sm font-bold text-primary hover:underline">
+                  Ver calendario →
+                </Link>
+              </div>
+              {todayAppointments.length === 0 ? (
+                <p className="text-muted-foreground">No hay citas programadas para hoy.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {todayAppointments.map((appt, i) => {
+                    const apptDate = new Date(appt.date_time);
+                    const status =
+                      appt.status === "completed"
+                        ? "done"
+                        : apptDate <= now && i === 0
+                          ? "next"
+                          : "upcoming";
+                    return (
+                      <Appt
+                        key={appt.id}
+                        time={formatTime(appt.date_time)}
+                        name={appt.patient_name}
+                        reason={appt.reason}
+                        status={status}
+                      />
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-border bg-card p-6 shadow-soft">
+              <h2 className="mb-5 text-xl font-extrabold tracking-tight">Pacientes recientes</h2>
+              {recentPatients.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aún no tienes pacientes con recetas o citas.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {recentPatients.map((p) => (
+                    <li key={p.id}>
+                      <div className="flex w-full items-center gap-3 rounded-2xl p-3">
+                        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-success text-success-foreground font-extrabold">
+                          {initials(p.name)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-base font-bold">{p.name}</div>
+                          <div className="truncate text-sm text-muted-foreground">
+                            {p.activeMeds} medicinas · Adherencia {p.adherence}%
+                          </div>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </div>
-          <ul className="space-y-3">
-            <Appt time="09:00" name="María González" reason="Seguimiento · Infección" status="next" />
-            <Appt time="10:30" name="Carlos Ramírez" reason="Consulta general" status="upcoming" />
-            <Appt time="11:15" name="Lucía Mendoza" reason="Revisión de presión" status="upcoming" />
-            <Appt time="12:00" name="Jorge Hernández" reason="Resultados de laboratorio" status="upcoming" />
-            <Appt time="08:00" name="Ana Torres" reason="Chequeo anual" status="done" />
-          </ul>
-        </section>
-
-        {/* Recent patients */}
-        <section className="rounded-3xl border border-border bg-card p-6 shadow-soft">
-          <h2 className="mb-5 text-xl font-extrabold tracking-tight">Pacientes recientes</h2>
-          <ul className="space-y-3">
-            {[
-              { name: "María González", info: "3 medicinas activas", initials: "MG" },
-              { name: "Carlos Ramírez", info: "Última visita: ayer", initials: "CR" },
-              { name: "Lucía Mendoza", info: "Adherencia 95%", initials: "LM" },
-            ].map((p) => (
-              <li key={p.name}>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 rounded-2xl p-3 text-left transition hover:bg-muted"
-                >
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-success text-success-foreground font-extrabold">
-                    {p.initials}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-base font-bold">{p.name}</div>
-                    <div className="truncate text-sm text-muted-foreground">{p.info}</div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
+        </>
+      )}
     </div>
   );
 }

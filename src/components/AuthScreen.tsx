@@ -75,6 +75,8 @@ export function AuthScreen({ role, mode, redirectTo }: AuthScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [specialty, setSpecialty] = useState("");
+  const [phone, setPhone] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -114,7 +116,13 @@ export function AuthScreen({ role, mode, redirectTo }: AuthScreenProps) {
       } else if (mode === "login") {
         await loginPatient({ email, password });
       } else {
-        await registerPatient({ name, email, password });
+        await registerPatient({
+          name,
+          email,
+          password,
+          phone: phone.trim() || undefined,
+          birthDate: birthDate || undefined,
+        });
       }
 
       navigate({ to: redirectTo || portalBase });
@@ -185,6 +193,29 @@ export function AuthScreen({ role, mode, redirectTo }: AuthScreenProps) {
                 className={inputClass}
               />
             </AuthField>
+          )}
+
+          {mode === "register" && role === "patient" && (
+            <>
+              <AuthField label="Teléfono">
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+52 55 1234 5678"
+                  className={inputClass}
+                  autoComplete="tel"
+                />
+              </AuthField>
+              <AuthField label="Fecha de nacimiento">
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  className={inputClass}
+                />
+              </AuthField>
+            </>
           )}
 
           <AuthField label="Contraseña" required>

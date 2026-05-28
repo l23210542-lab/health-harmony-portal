@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { ChevronDown, Pill, Clock, Info, AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ChevronDown, Pill, Clock, Info, AlertCircle, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { getPatientSession } from "@/lib/auth";
+import { frequencyLabel } from "@/lib/format";
+import type { PatientMedicationView } from "@/server/prescriptions";
 
 export const Route = createFileRoute("/patient/prescriptions")({
   head: () => ({
@@ -9,73 +14,32 @@ export const Route = createFileRoute("/patient/prescriptions")({
   component: Prescriptions,
 });
 
-type Med = {
-  id: string;
-  name: string;
-  dose: string;
-  frequency: string;
-  duration: string;
-  purpose: string;
-  instructions: string;
-  status: "active" | "completed";
-  doctor: string;
-  date: string;
-};
-
-const meds: Med[] = [
-  {
-    id: "1",
-    name: "Amoxicilina 500mg",
-    dose: "1 cápsula",
-    frequency: "Cada 8 horas",
-    duration: "7 días",
-    purpose: "Tratamiento de infección bacteriana en la garganta. Antibiótico de amplio espectro.",
-    instructions: "Tomar con un vaso lleno de agua. Completar todo el tratamiento aunque te sientas mejor.",
-    status: "active",
-    doctor: "Dra. Elena Ríos",
-    date: "23 Abr 2026",
-  },
-  {
-    id: "2",
-    name: "Ibuprofeno 400mg",
-    dose: "1 tableta",
-    frequency: "Cada 6 horas si hay dolor",
-    duration: "5 días",
-    purpose: "Antiinflamatorio para reducir inflamación y dolor.",
-    instructions: "Tomar siempre con alimentos para evitar molestias estomacales.",
-    status: "active",
-    doctor: "Dra. Elena Ríos",
-    date: "23 Abr 2026",
-  },
-  {
-    id: "3",
-    name: "Loratadina 10mg",
-    dose: "1 tableta",
-    frequency: "Cada 24 horas",
-    duration: "30 días",
-    purpose: "Antihistamínico para controlar síntomas de alergia estacional.",
-    instructions: "Tomar preferiblemente en la noche.",
-    status: "active",
-    doctor: "Dr. Marco Vega",
-    date: "10 Abr 2026",
-  },
-  {
-    id: "4",
-    name: "Paracetamol 500mg",
-    dose: "2 tabletas",
-    frequency: "Cada 8 horas",
-    duration: "3 días",
-    purpose: "Manejo de fiebre y dolor leve a moderado.",
-    instructions: "No exceder 8 tabletas en 24 horas.",
-    status: "completed",
-    doctor: "Dra. Elena Ríos",
-    date: "15 Mar 2026",
-  },
-];
-
 function Prescriptions() {
+  const session = getPatientSession();
   const [tab, setTab] = useState<"active" | "completed">("active");
-  const filtered = meds.filter((m) => m.status === tab);
+  const [meds, setMeds] = useState<PatientMedicationView[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    if (!session?.id) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/patient/prescriptions?patientId=${encodeURIComponent(session.id)}`);
+      if (!res.ok) throw new Error();
+      const json = (await res.json()) as { data: PatientMedicationView[] };
+      setMeds(json.data);
+    } catch {
+      setMeds([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.id]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const filtered = meds.filter((m) => m.treatment_status === tab);
 
   return (
     <div className="space-y-8">
@@ -86,7 +50,6 @@ function Prescriptions() {
         </p>
       </header>
 
-      {/* Tabs */}
       <div className="inline-flex rounded-2xl bg-muted p-1.5">
         {(["active", "completed"] as const).map((t) => (
           <button
@@ -94,9 +57,7 @@ function Prescriptions() {
             type="button"
             onClick={() => setTab(t)}
             className={`min-h-12 rounded-xl px-6 text-base font-bold transition ${
-              tab === t
-                ? "bg-surface text-foreground shadow-soft"
-                : "text-muted-foreground"
+              tab === t ? "bg-surface text-foreground shadow-soft" : "text-muted-foreground"
             }`}
           >
             {t === "active" ? "Activas" : "Pasadas"}
@@ -104,17 +65,29 @@ function Prescriptions() {
         ))}
       </div>
 
-      <ul className="space-y-4">
-        {filtered.map((m) => (
-          <MedCard key={m.id} med={m} />
-        ))}
-      </ul>
+      {loading ? (
+        <div className="flex min-h-40 items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-3xl border-2 border-dashed border-border p-10 text-center text-muted-foreground">
+          No hay medicamentos {tab === "active" ? "activos" : "pasados"}.
+        </div>
+      ) : (
+        <ul className="space-y-4">
+          {filtered.map((m) => (
+            <MedCard key={m.id} med={m} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-function MedCard({ med }: { med: Med }) {
+function MedCard({ med }: { med: PatientMedicationView }) {
   const [open, setOpen] = useState(false);
+  const freq = frequencyLabel(med.frequency_hours);
+
   return (
     <li className="overflow-hidden rounded-3xl border border-border bg-card shadow-soft">
       <button
@@ -130,9 +103,9 @@ function MedCard({ med }: { med: Med }) {
           <div className="text-xl font-bold">{med.name}</div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" /> {med.frequency}
+              <Clock className="h-4 w-4" /> {freq}
             </span>
-            <span>· {med.duration}</span>
+            <span>· {med.duration_days} días</span>
           </div>
         </div>
         <ChevronDown
@@ -146,16 +119,18 @@ function MedCard({ med }: { med: Med }) {
           <DetailRow
             icon={<AlertCircle className="h-5 w-5" />}
             label="Instrucciones"
-            value={med.instructions}
+            value={med.instructions || "Sin instrucciones adicionales."}
           />
           <div className="grid gap-3 rounded-2xl bg-card p-4 sm:grid-cols-3">
             <SmallStat label="Dosis" value={med.dose} />
-            <SmallStat label="Frecuencia" value={med.frequency} />
-            <SmallStat label="Duración" value={med.duration} />
+            <SmallStat label="Frecuencia" value={freq} />
+            <SmallStat label="Duración" value={`${med.duration_days} días`} />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-            <span>Recetado por <strong className="text-foreground">{med.doctor}</strong></span>
-            <span>{med.date}</span>
+            <span>
+              Recetado por <strong className="text-foreground">{med.doctor_name}</strong>
+            </span>
+            <span>{format(new Date(med.prescription_date), "d MMM yyyy", { locale: es })}</span>
           </div>
         </div>
       )}
